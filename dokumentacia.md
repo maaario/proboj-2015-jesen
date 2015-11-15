@@ -93,7 +93,7 @@ legenda:
 R   G   B
 255 255 255 MAPA_VOLNO
 0   0   0   MAPA_SUTER
-255 255 0   MAPA_SPAWN (tu sa rodia bonusy      
-0   255 0   MAPA_START tu sa rodia hadi    
+255 255 0   MAPA_SPAWN (tu sa rodia bonusy
+0   255 0   MAPA_START tu sa rodia hadi
 
 potom ich treba dat do adresara mapy

@@ -104,52 +104,7 @@ int main(int argc, char *argv[]) {
   checkOstream(observationstream, zaznamovyAdresar+"/observation");
   zapniObservation(&observationstream);
 
-  
-  Stav stav = zaciatokHry(mapa);
-  uloz(logstream, stav.teren);
-  uloz(logstream, stav);
-
-  while (!hraSkoncila(mapa, stav)) {
-    vector<int> zijuci = ktoriZiju(mapa, stav);
-    vector<Klient*> pZijuci;
-    vector<string> requesty;
-    for (unsigned z = 0; z < zijuci.size(); z++) {
-      int i = zijuci[z];
-      pZijuci.push_back(&klienti[i]);
-      stringstream requestbuf;
-      /*Teren viditelne; //WARNING vsetko vidia, ziadne zakodovanie mapy. TODO serializuj teren
-      zistiCoVidi(stav, i, viditelne);
-      vector<int> zakodovaneViditelne;
-      zakodujViditelnyTeren(viditelne, zakodovaneViditelne);
-      uloz(requestbuf, zakodovaneViditelne);*/
-      Stav novy;
-      zamaskujStav(mapa, stav, i, novy);
-      uloz(requestbuf, novy);
-      requesty.push_back(requestbuf.str());
-    }
-    vector<string> strOdpovede = Klient::komunikujNaraz(pZijuci, requesty);
-    vector<Odpoved> odpovede(klienti.size());
-
-    for (unsigned z = 0; z < zijuci.size(); z++) {
-      int i = zijuci[z];
-      stringstream responsebuf(strOdpovede[z]);
-      nacitaj(responsebuf, odpovede[i]);
-      odmaskujOdpoved(mapa, stav, i, odpovede[i]);
-      int ok = skusNacitatSentinel(responsebuf, '.') && !responsebuf.fail();
-      if (!ok) {
-        log("nepodarilo sa nacitat odpoved od klienta %d", i);
-        //odpovede[i].clear(); //TODO dat tam defaultnu odpoved ktora nic nehovori
-        klienti[i].restartuj();
-      }
-    }
-
-    odsimulujKolo(mapa, stav, odpovede);
-
-    uloz(logstream, odpovede);
-    uloz(logstream, stav);
-    logstream << flush;
-    observationstream << flush;
-  }
+  //TODO: tu by asi mal byt hlavny cyklus
 
   logstream.close();
   observationstream.close();
@@ -158,7 +113,7 @@ int main(int argc, char *argv[]) {
 
   vector<int> vysledky(klienti.size());
   for (unsigned i = 0; i < klienti.size(); i++) {
-    vysledky[i] = zistiSkore(stav, i);
+    vysledky[i] = 0;  //TODO
   }
 
   ofstream rankstream((zaznamovyAdresar+"/rank").c_str());
