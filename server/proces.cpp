@@ -13,6 +13,10 @@ using namespace std;
 
 #include "proces.h"
 
+int Proces::getPid() {
+  return pid;
+}
+
 void Proces::write(string data) {
   if(pid == -1) return;
   unsigned cur = 0;

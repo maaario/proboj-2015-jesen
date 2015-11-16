@@ -28,6 +28,7 @@ static void shutdownHandler(int signum) {
     praveUkoncujem = 1;
     log("dostal som ukoncovaci signal %d", signum);
     if (cleanupFunkcia) {
+      log("volam cleanup funkciu");
       cleanupFunkcia();
     }
   }

@@ -1,5 +1,6 @@
 //SECURITY WARNING
 //Chod prec uboha dusa. temne su miesta kam vchadzas
+#include <iostream>
 #include <climits>
 #include <unistd.h>
 using namespace std;
@@ -19,12 +20,19 @@ Klient::Klient(string _label, string cwd, string zaznamovyAdresar) : label(_labe
                        zaznamovyAdresar + "/stderr." + label);
 }
 
+string Klient::getLabel() {
+  return label;
+}
+
+void Klient::spusti() {
+  proces.restartuj();
+}
+
 string Klient::citaj() {
   precitane += proces.nonblockRead();
-  if (precitane.back() == '.') {    // vraciame az hotovu odpoved, t.j. uzavretu znakom '.'
+  if (precitane.size() > 0 && precitane.back() == '\n') {   // vraciame az hotovu odpoved, uzavretu znakom noveho riadku
     string navrat = precitane;
-    navrat.pop_back();              // odstranime bodku
-    precitane.clear();              // resetujeme precitane
+    precitane.clear();                                      // resetujeme precitane
     return navrat;
   } else {
     return "";

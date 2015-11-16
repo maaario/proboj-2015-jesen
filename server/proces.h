@@ -23,6 +23,7 @@ class Proces {
       errfile = _errfile;
     }
 
+    int getPid();
     void write(std::string data);
     std::string nonblockRead();
     void zabi();
