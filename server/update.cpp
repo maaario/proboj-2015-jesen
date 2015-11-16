@@ -12,13 +12,3 @@ using namespace std;
 
 static ostream* g_observation;
 void zapniObservation(ostream* observation) { g_observation = observation; }
-
-Stav zaciatokHry(const Mapa& mapa) {
-}
-
-void odsimulujKolo(const Mapa& mapa, Stav& stav, const vector<Odpoved>& akcie) {
-}
-
-bool hraSkoncila(const Mapa& mapa, const Stav& stav) {
-  return false;
-}

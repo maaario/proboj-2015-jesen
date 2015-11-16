@@ -15,8 +15,6 @@ using namespace std;
 #include "update.h"
 #include "klient.h"
 #include "marshal.h"
-#include "mapa.h"
-
 
 vector<Klient> klienti;
 

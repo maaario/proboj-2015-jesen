@@ -33,8 +33,8 @@ int main(int argc, char *argv[]) {
 
   nacitajMedia();
 
-  int w, h;
-  zistiVelkostObrazovky(&w, &h);
+  int w = 1024;
+  int h = 768;
   const char *fs = getenv("FULLSCREEN");
   SDL_Surface *screen = SDL_SetVideoMode(w, h, 32, SDL_SWSURFACE | (fs && *fs ? SDL_FULLSCREEN : 0));
 
