@@ -20,7 +20,7 @@ vector<Klient> klienti;
 
 // tato trapna funkcia existuje len kvoli inicializujSignaly()
 void zabiKlientov() {
-  for (Klient klient: klienti) {
+  for (Klient &klient: klienti) {
     log("zabijam klienta");
     klient.zabi();
   }
