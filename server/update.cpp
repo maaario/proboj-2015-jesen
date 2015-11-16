@@ -14,7 +14,6 @@ static ostream* g_observation;
 void zapniObservation(ostream* observation) { g_observation = observation; }
 
 Stav zaciatokHry(const Mapa& mapa) {
-  //TODO
 }
 
 void odsimulujKolo(const Mapa& mapa, Stav& stav, const vector<Odpoved>& akcie) {
