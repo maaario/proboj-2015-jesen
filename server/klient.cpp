@@ -8,11 +8,6 @@ using namespace std;
 #include "klient.h"
 #include "util.h"
 
-#define CAS_KLIENTA_NA_INICIALIZACIU 4000
-#define CAS_KLIENTA_NA_ODPOVED 500
-#define MAXIMUM_RESTARTOV 3
-
-
 Klient::Klient(string _label, string cwd, string zaznamovyAdresar) : label(_label), precitane("") {
   vector<string> command;
   command.push_back("./hrac");

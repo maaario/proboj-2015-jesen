@@ -7,7 +7,7 @@
 #include "proces.h"
 
 class Klient {
-  public:
+  private:
     std::string label;
     Proces proces;
     std::string precitane;

@@ -51,7 +51,6 @@ int main(int argc, char *argv[]) {
   vector<string> klientskeAdresare;
   for (int i = 2; i < argc; ++i) {
     klientskeAdresare.push_back(string(argv[i]));
-
   }
 
   for (int i = 0; i < klientskeAdresare.size(); ++i) {
