@@ -41,7 +41,7 @@ struct Spawn {
     pozicia.x = x;
     pozicia.y = y;
   }
-}
+};
 
 struct Hrac {
   Bod pozicia, rychlost;
@@ -55,7 +55,7 @@ struct Hrac {
     akceleracia.x = 0;
     akceleracia.y = 0;
   }
-}
+};
 
 struct Planeta {
   Bod pozicia;
@@ -66,12 +66,12 @@ struct Planeta {
     pozicia.y = y;
     this->polomer = polomer;
   }
-}
+};
 
 struct Hra {
   vector<Spawn> spawny;
   vector<Hrac> hraci;
   vector<Planeta> planety;
-}
+};
 
 #endif
