@@ -11,7 +11,9 @@ class Klient {
     std::string label;
     Proces proces;
     std::string precitane;
+    
     long long poslRestart;
+    
   public:
     Klient(std::string _label, std::string adresar, std::string logAdresar);
     std::string getLabel();
@@ -20,6 +22,7 @@ class Klient {
     std::string citaj();
     void posli(std::string data);
     void zabi();
+    
     bool nebezi();
 };
 

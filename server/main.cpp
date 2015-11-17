@@ -8,6 +8,7 @@
 #include <vector>
 #include <sstream>
 #include <fstream>
+#include <algorithm>
 using namespace std;
 
 #include "util.h"
@@ -15,6 +16,7 @@ using namespace std;
 #include "update.h"
 #include "klient.h"
 #include "marshal.h"
+#include "mapa.h"
 
 vector<Klient> klienti;
 
@@ -31,7 +33,7 @@ int main(int argc, char *argv[]) {
   srand(seed);
 
   if (argc < 3) {
-    fprintf(stderr, "usage: %s <zaznamovy-adresar> {<adresare-klientov> ...}\n", argv[0]);
+    fprintf(stderr, "usage: %s <zaznamovy-adresar> <mapa> {<adresare-klientov> ...}\n", argv[0]);
     return 1;
   }
 
@@ -43,15 +45,19 @@ int main(int argc, char *argv[]) {
   //
 
   string zaznamovyAdresar(argv[1]);
+  string mapovySubor(argv[2]);
 
   //
   // nacitame klientov
   //
-
   vector<string> klientskeAdresare;
-  for (int i = 2; i < argc; ++i) {
+  for (int i = 3; i < argc; ++i) {
     klientskeAdresare.push_back(string(argv[i]));
   }
+
+  //nacitaj mapu
+  Mapa mapa;
+  nacitajMapu(mapa,mapovySubor);
 
   if (!jeAdresar(zaznamovyAdresar)) {
     if (mkdir(zaznamovyAdresar.c_str(), 0777)) {
@@ -62,6 +68,13 @@ int main(int argc, char *argv[]) {
   for (int i = 0; i < klientskeAdresare.size(); ++i) {
     klienti.push_back(Klient(itos(i), klientskeAdresare[i], zaznamovyAdresar));
   }
+  
+  //eliminovat "baklazan je najlepsi, tak ho fokusneme"
+  random_shuffle(klienti.begin(),klienti.end());
+
+  //zostroj pociatocny stav
+  Stav stav;
+  pociatocnyStav(mapa,stav,klienti.size());
 
   //
   // spustime klientov
@@ -70,7 +83,11 @@ int main(int argc, char *argv[]) {
   log("spustam klientov");
   for (Klient &klient: klienti) {
     klient.spusti();
-    klient.posli("hello\n");
+
+    //posli pociatocny stav
+    stringstream popisStavu;
+    uloz(popisStavu,stav);
+    klient.posli(popisStavu.str());
   }
 
   //
@@ -79,30 +96,46 @@ int main(int argc, char *argv[]) {
 
   const long long ups = 100LL;   // updates per second
   const long long delta_time = 1000LL / ups;
-  long long last_time = gettime();
   long long tick = 0;
+
+  vector<Prikaz> akcie;
 
   while (true) {
     // pockame, aby sme dodrzovali zelane UPS
     long long current_time = gettime();
+    long long last_time = stav.time;
     if (current_time < last_time + delta_time) {
       long long remaining_ms = (last_time + delta_time) - current_time;
       usleep(remaining_ms * 1000LL);
     }
-    last_time = gettime();
     tick += 1;
     
     for (Klient &klient: klienti) {
+      int kolkaty = akcie.size();
+      akcie.push_back(Prikaz());
+      
       if (klient.nebezi()) {
         klient.restartuj(current_time);
         continue;
       }
-      string prikaz = klient.citaj();
-      if (prikaz == "") continue;
+      
+      string odpoved = klient.citaj();
+      if (odpoved == "") { //klient pocita/vypisuje (nie nicnerobi, to by bolo "\n")
+        continue;
+      }
+      stringstream buf;
+      buf << odpoved;
+      nacitaj(buf,akcie[kolkaty]);
 
-      log("klient \"%s\" napisal: %s", klient.getLabel().c_str(), prikaz.c_str());
-      klient.posli(itos(tick) + "\n");
+      log("klient \"%s\" napisal: %s", klient.getLabel().c_str(), odpoved.c_str());
+      //klient.posli(itos(tick) + "\n");
     }
+
+    current_time = gettime();
+    odsimuluj(mapa,stav,akcie,current_time - last_time);
+
+    //cleanup
+    akcie.clear();
   }
 
   //

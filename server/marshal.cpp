@@ -33,9 +33,15 @@ bool skusNacitatSentinel(istream& in, int sentinel) {
 
 
 template<> void uloz<int>(ostream& buf, const int& in) {
-  buf << in << '\n';
+  buf << in << ' ';
+}
+template<> void uloz<double>(ostream& buf, const double& in) {
+  buf << in << ' ';
 }
 template<> void nacitaj<int>(istream& buf, int& out) {
+  buf >> out;
+}
+template<> void nacitaj<double>(istream& buf, double& out) {
   buf >> out;
 }
 
