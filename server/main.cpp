@@ -58,6 +58,8 @@ int main(int argc, char *argv[]) {
   //nacitaj mapu
   Mapa mapa;
   nacitajMapu(mapa,mapovySubor);
+  stringstream popisMapy;
+  uloz(popisMapy,mapa);
 
   if (!jeAdresar(zaznamovyAdresar)) {
     if (mkdir(zaznamovyAdresar.c_str(), 0777)) {
@@ -75,22 +77,19 @@ int main(int argc, char *argv[]) {
   //zostroj pociatocny stav
   Stav stav;
   pociatocnyStav(mapa,stav,klienti.size());
+  stringstream popisStavu;
+  uloz(popisStavu,stav);
 
   //
   // spustime klientov
   //
-  {
-    stringstream popisMapy, popisStavu;
-    uloz(popisMapy,mapa);
-    uloz(popisStavu,stav);
-    log("spustam klientov");
-    for (Klient &klient: klienti) {
-      klient.spusti();
+  log("spustam klientov");
+  for (Klient &klient: klienti) {
+    klient.spusti();
 
-      //posli pociatocny stav
-      klient.posli(popisMapy.str().c_str());
-      klient.posli(popisStavu.str().c_str());
-    }
+    //posli pociatocny stav
+    klient.posli(popisMapy.str().c_str());
+    klient.posli(popisStavu.str().c_str());
   }
 
   //
@@ -113,7 +112,7 @@ int main(int argc, char *argv[]) {
     }
     tick += 1;
 
-    stringstream popisStavu;
+    popisStavu.str("");
     uloz(popisStavu,stav);
 
     for (Klient &klient: klienti) {
@@ -122,6 +121,10 @@ int main(int argc, char *argv[]) {
       
       if (klient.nebezi()) {
         klient.restartuj(current_time);
+        if (!klient.nebezi()) {
+          klient.posli(popisMapy.str().c_str());
+          klient.posli(popisStavu.str().c_str());
+        }
         continue;
       }
       
@@ -133,7 +136,7 @@ int main(int argc, char *argv[]) {
       buf << odpoved;
       nacitaj(buf,akcie[kolkaty]);
 
-      log("klient \"%s\" napisal: %s", klient.getLabel().c_str(), odpoved.c_str());
+      log("klient \"%s\" na pozicii %f,%f napisal: %s", klient.getLabel().c_str(), stav.hraci[kolkaty].pozicia.x, stav.hraci[kolkaty].pozicia.y, odpoved.c_str());
       klient.posli(popisStavu.str().c_str());
     }
 
@@ -147,7 +150,6 @@ int main(int argc, char *argv[]) {
   //
   // zabijeme klientov
   //
-
   log("ukoncujeme klientov");
   zabiKlientov();
 

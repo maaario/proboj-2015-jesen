@@ -26,15 +26,17 @@ int main() {
   nacitaj(cin,mapa);
   fprintf(stderr, "START pid=%d, seed=%u\n", getpid(), seed);
 
-  while (cin.good()) {
-    int f=0;
-    cout << 10/f;
-    
+  while (cin.good()) {    
     nacitaj(cin,stav);
 
     zistiTah();
 
     uloz(cout,prikaz);
     cout << endl;
+
+    if (rand()%100==0) {
+      int f=0;
+      cout << 10/f;
+    }
   }
 }

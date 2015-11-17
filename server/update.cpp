@@ -15,7 +15,7 @@ static ostream* g_observation;
 void zapniObservation(ostream* observation) { g_observation = observation; }
 
 void odsimuluj(const Mapa& mapa, Stav& stav, const vector<Prikaz>& akcie, long long zmena_cas) {
-  double dt = zmena_cas/POMALOST_CASU;
+  double dt = (double)zmena_cas/(double)POMALOST_CASU;
   Stav old_stav = stav;
   stav.time += zmena_cas;
 
@@ -33,6 +33,8 @@ void odsimuluj(const Mapa& mapa, Stav& stav, const vector<Prikaz>& akcie, long l
 void pociatocnyStav(Mapa& mapa, Stav& stav, int pocKlientov) {
   stav = Stav();
   stav.time = gettime();
+
+  //pridel hracom nahodne spawny
   random_shuffle(mapa.spawny.begin(),mapa.spawny.end());
   for (int i=0; i<pocKlientov; i++) {
     Bod start = mapa.spawny[i].pozicia;
@@ -40,4 +42,6 @@ void pociatocnyStav(Mapa& mapa, Stav& stav, int pocKlientov) {
     stav.hraci.push_back(miso);
   }
   mapa.spawny.clear(); //uz nepotrebne
+
+  
 }

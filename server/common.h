@@ -9,7 +9,7 @@
 #include <cstdio>
 #include <cmath>
 
-#define POMALOST_CASU 1000ll
+#define POMALOST_CASU 10ll
 #define MAX_ACCEL 1.0
 
 struct Bod {
