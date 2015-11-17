@@ -20,7 +20,7 @@ void odsimuluj(const Mapa& mapa, Stav& stav, const vector<Prikaz>& akcie, long l
   stav.time += zmena_cas;
 
   int kolkaty=0;
-  for (Hrac hrac: stav.hraci) {
+  for (Hrac& hrac: stav.hraci) {
     Bod akceleracia = akcie[kolkaty].akceleracia;
     if (akceleracia.dist() > MAX_ACCEL) {
       akceleracia = akceleracia*(akceleracia.dist()/MAX_ACCEL);

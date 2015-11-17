@@ -140,6 +140,7 @@ reflection(Mapa);
 end();
 
 reflection(Stav);
+  member(time);
   member(hraci);
 end();
 

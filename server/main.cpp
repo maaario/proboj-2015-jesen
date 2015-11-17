@@ -79,15 +79,18 @@ int main(int argc, char *argv[]) {
   //
   // spustime klientov
   //
-
-  log("spustam klientov");
-  for (Klient &klient: klienti) {
-    klient.spusti();
-
-    //posli pociatocny stav
-    stringstream popisStavu;
+  {
+    stringstream popisMapy, popisStavu;
+    uloz(popisMapy,mapa);
     uloz(popisStavu,stav);
-    klient.posli(popisStavu.str());
+    log("spustam klientov");
+    for (Klient &klient: klienti) {
+      klient.spusti();
+
+      //posli pociatocny stav
+      klient.posli(popisMapy.str().c_str());
+      klient.posli(popisStavu.str().c_str());
+    }
   }
 
   //
@@ -109,7 +112,10 @@ int main(int argc, char *argv[]) {
       usleep(remaining_ms * 1000LL);
     }
     tick += 1;
-    
+
+    stringstream popisStavu;
+    uloz(popisStavu,stav);
+
     for (Klient &klient: klienti) {
       int kolkaty = akcie.size();
       akcie.push_back(Prikaz());
@@ -128,7 +134,7 @@ int main(int argc, char *argv[]) {
       nacitaj(buf,akcie[kolkaty]);
 
       log("klient \"%s\" napisal: %s", klient.getLabel().c_str(), odpoved.c_str());
-      //klient.posli(itos(tick) + "\n");
+      klient.posli(popisStavu.str().c_str());
     }
 
     current_time = gettime();
