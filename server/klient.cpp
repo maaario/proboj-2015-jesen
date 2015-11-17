@@ -8,6 +8,8 @@ using namespace std;
 #include "klient.h"
 #include "util.h"
 
+#define MIN_CAS_RESTART 1000ll
+
 Klient::Klient(string _label, string cwd, string zaznamovyAdresar) : label(_label), precitane("") {
   vector<string> command;
   command.push_back("./hrac");
@@ -20,6 +22,19 @@ string Klient::getLabel() {
 }
 
 void Klient::spusti() {
+  poslRestart= gettime();
+  proces.restartuj();
+}
+
+void Klient::restartuj() {
+  long long cas= gettime();
+  //log("cas=%lld, poslRestart=%lld",cas,poslRestart);
+  if (cas-poslRestart < MIN_CAS_RESTART) {
+    return ;
+  }
+  log("restartujem klienta \"%s\"",label.c_str());
+  poslRestart= cas;
+  precitane.clear();
   proces.restartuj();
 }
 
@@ -40,4 +55,9 @@ void Klient::posli(string data) {
 
 void Klient::zabi() {
   proces.zabi();
+}
+
+bool Klient::nebezi() {
+  int err = proces.nebezi();
+  return err;
 }

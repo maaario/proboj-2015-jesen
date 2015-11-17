@@ -28,6 +28,7 @@ class Proces {
     std::string nonblockRead();
     void zabi();
     void restartuj();
+    bool nebezi();
 };
 
 #endif

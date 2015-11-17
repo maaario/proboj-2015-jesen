@@ -106,3 +106,9 @@ void Proces::restartuj() {
   free((void *)_command);
 }
 
+bool Proces::nebezi() {
+  int status;
+  errno=0;
+  waitpid(pid, &status, WNOHANG);
+  return (errno == ECHILD);
+}

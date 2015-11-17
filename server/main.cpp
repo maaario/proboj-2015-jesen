@@ -21,7 +21,7 @@ vector<Klient> klienti;
 // tato trapna funkcia existuje len kvoli inicializujSignaly()
 void zabiKlientov() {
   for (Klient &klient: klienti) {
-    log("zabijam klienta");
+    log("zabijam klienta %s",klient.getLabel().c_str());
     klient.zabi();
   }
 }
@@ -53,6 +53,12 @@ int main(int argc, char *argv[]) {
     klientskeAdresare.push_back(string(argv[i]));
   }
 
+  if (!jeAdresar(zaznamovyAdresar)) {
+    if (mkdir(zaznamovyAdresar.c_str(), 0777)) {
+      fprintf(stderr, "mkdir: %s: %s\n", zaznamovyAdresar.c_str(), strerror(errno));
+      return 1;
+    }
+  }
   for (int i = 0; i < klientskeAdresare.size(); ++i) {
     klienti.push_back(Klient(itos(i), klientskeAdresare[i], zaznamovyAdresar));
   }
@@ -85,8 +91,12 @@ int main(int argc, char *argv[]) {
     }
     last_time = gettime();
     tick += 1;
-
+    
     for (Klient &klient: klienti) {
+      if (klient.nebezi()) {
+        klient.restartuj();
+        continue;
+      }
       string prikaz = klient.citaj();
       if (prikaz == "") continue;
 
