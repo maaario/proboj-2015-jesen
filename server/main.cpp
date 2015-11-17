@@ -94,7 +94,7 @@ int main(int argc, char *argv[]) {
     
     for (Klient &klient: klienti) {
       if (klient.nebezi()) {
-        klient.restartuj();
+        klient.restartuj(current_time);
         continue;
       }
       string prikaz = klient.citaj();
