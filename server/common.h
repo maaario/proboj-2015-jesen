@@ -12,6 +12,26 @@
 #define POMALOST_CASU 10ll
 #define MAX_ACCEL 1.0
 
+//rozne typy objektov
+#define TYP_LOD 0
+#define TYP_ASTEROID 100
+#define TYP_PLANETA 200
+#define TYP_HVIEZDA 300
+
+#define TYP_LASER 400
+#define TYP_RAKETA 500
+#define TYP_MINA 600
+
+#define TYP_URYCHLOVAC 700
+#define TYP_STIT 800
+#define TYP_LEKARNICKA 900
+
+//parametre lode
+#define LOD_POLOMER 10.0
+#define LOD_KOLIZNY_LV 10
+#define LOD_NEBEZPECNOST 10.0
+#define LOD_ZIVOTY 100.0
+
 struct Bod {
   double x, y;
 
@@ -42,68 +62,83 @@ struct Bod {
   }
 };
 
-struct Spawn {
-  Bod pozicia;
+struct FyzikalnyObjekt {
+  int typ;
 
-  Spawn() {}
-  Spawn(double x, double y) {
-    pozicia.x = x;
-    pozicia.y = y;
+  Bod pozicia;
+  Bod rychlost;
+  double polomer;
+
+  int koliznyLevel;
+
+  double tvrdost;
+  double zivoty;
+
+  FyzikalnyObjekt (const int& t, const Bod& poz,const Bod& v,const double& r,
+  const double& coll, const double& hard,const double& hp) :
+    typ(t),
+    pozicia(poz), rychlost(v), polomer(r),
+    koliznyLevel(coll),
+    tvrdost(hard), zivoty(hp) {}
+
+  FyzikalnyObjekt () {}
+
+  bool zije () {
+    return zivoty > 0;
+  }
+};
+
+struct Vec {
+  int typ;
+  double zivotnost;
+
+  Vec (const int& t,const double& ziv) : typ(t), zivotnost(ziv) {}
+  Vec () {}
+
+  bool zije () {
+    return zivotnost > 0;
   }
 };
 
 struct Hrac {
-  Bod pozicia, rychlost;
+  FyzikalnyObjekt obj;
+  double skore;
+  vector<Vec> zbrane;
+  vector<Vec> veci;
 
-  Hrac () {}
-  Hrac(double x, double y, double v_x, double v_y) {
-    pozicia.x = x;
-    pozicia.y = y;
-    rychlost.x = v_x;
-    rychlost.y = v_y;
+  Hrac (const Bod& poz) {
+    obj=FyzikalnyObjekt(TYP_LOD, poz, Bod(), LOD_POLOMER, LOD_KOLIZNY_LV, LOD_NEBEZPECNOST, LOD_ZIVOTY);
+    skore= 0.0;
   }
+  Hrac () {}
 };
 
 struct Prikaz {
-  Bod akceleracia;
+  Bod acc, ciel;
+  int pal;
+  vector<int> pouzi;
 
-  Prikaz() {}
-  Prikaz(Bod B) {
-    akceleracia=B;
-  }
-  Prikaz(double a_x, double a_y) {
-    akceleracia= Bod(a_x, a_y);
-  }
+  Prikaz () : acc(Bod()), ciel(Bod()), pal(-1) {}
 };
 
-struct Planeta {
-  Bod pozicia;
-  double polomer;
+struct Mapa {
+  double w,h;
+  double casDoChrchliaka;
+  vector<Bod> spawny;
+  vector<FyzikalnyObjekt> objekty;
 
-  Planeta() {}
-  Planeta(double x, double y, double polomer) {
-    pozicia.x = x;
-    pozicia.y = y;
-    this->polomer = polomer;
-  }
+  Mapa (const double& sirka,const double& vyska,const double& t) :
+  w(sirka), h(vyska), casDoChrchliaka(t) {}
+
+  Mapa () {}
 };
 
-struct Mapa { //obsahuje staticke objekty
-  vector<Spawn> spawny;
-  vector<Planeta> planety;
-};
-
-struct Stav { //dynamicke objekty
-  long long time;
+struct Stav {
+  double cas;
+  vector<FyzikalnyObjekt> objekty;
   vector<Hrac> hraci;
-  
-  void operator= (const Stav S) {
-    time = S.time;
-    hraci.clear();
-    for (Hrac hrac : S.hraci) {
-      hraci.push_back(hrac);
-    }
-  }
+
+  Stav () : cas(0.0) {}
 };
 
 #endif
@@ -116,32 +151,48 @@ reflection(Bod);
   member(y);
 end();
 
-reflection(Spawn);
+reflection(FyzikalnyObjekt);
+  member(typ);
   member(pozicia);
+  member(rychlost);
+  member(polomer);
+  member(koliznyLevel);
+  member(tvrdost);
+  member(zivoty);
+end();
+
+reflection(Vec);
+  member(typ);
+  member(zivotnost);
 end();
 
 reflection(Hrac);
-  member(pozicia);
-  member(rychlost);
+  member(obj);
+  member(skore);
+  member(zbrane);
+  member(veci);
 end();
 
 reflection(Prikaz);
-  member(akceleracia);
-end();
-
-reflection(Planeta);
-  member(pozicia);
-  member(polomer);
+  member(acc);
+  member(ciel);
+  member(pal);
+  member(pouzi);
 end();
 
 reflection(Mapa);
+  member(w);
+  member(h);
+  member(casDoChrchliaka);
   member(spawny);
-  member(planety);
+  member(objekty);
 end();
 
 reflection(Stav);
-  member(time);
+  member(cas);
+  member(objekty);
   member(hraci);
 end();
 
 #endif
+//*/

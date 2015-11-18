@@ -98,6 +98,7 @@ int main(int argc, char *argv[]) {
 
   const long long ups = 100LL;   // updates per second
   const long long delta_time = 1000LL / ups;
+  long long last_time = gettime();
   long long tick = 0;
 
   vector<Prikaz> akcie;
@@ -105,7 +106,6 @@ int main(int argc, char *argv[]) {
   while (true) {
     // pockame, aby sme dodrzovali zelane UPS
     long long current_time = gettime();
-    long long last_time = stav.time;
     if (current_time < last_time + delta_time) {
       long long remaining_ms = (last_time + delta_time) - current_time;
       usleep(remaining_ms * 1000LL);
@@ -136,12 +136,13 @@ int main(int argc, char *argv[]) {
       buf << odpoved;
       nacitaj(buf,akcie[kolkaty]);
 
-      log("klient \"%s\" na pozicii %f,%f napisal: %s", klient.getLabel().c_str(), stav.hraci[kolkaty].pozicia.x, stav.hraci[kolkaty].pozicia.y, odpoved.c_str());
+      log("klient \"%s\" napisal: %s", klient.getLabel().c_str(), odpoved.c_str());
       klient.posli(popisStavu.str().c_str());
     }
 
     current_time = gettime();
     odsimuluj(mapa,stav,akcie,current_time - last_time);
+    last_time = current_time;
 
     //cleanup
     akcie.clear();

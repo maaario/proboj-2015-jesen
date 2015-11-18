@@ -41,6 +41,7 @@ template<> void uloz<long long>(ostream& buf, const long long& in) {
 template<> void uloz<double>(ostream& buf, const double& in) {
   buf << in << ' ';
 }
+
 template<> void nacitaj<int>(istream& buf, int& out) {
   buf >> out;
 }

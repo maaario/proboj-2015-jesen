@@ -14,7 +14,7 @@ Prikaz prikaz;
 // main() zavola tuto funkciu, ked chce vediet, aky prikaz chceme vykonat,
 // co tato funkcia rozhodne pomocou toho, ako nastavi prikaz;
 void zistiTah() {
-  prikaz = Prikaz(0.7,0.7);
+  
 }
 
 int main() {
