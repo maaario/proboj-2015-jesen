@@ -3,11 +3,33 @@
 #define LOGIC_H
 
 #include <string>
+#include <vector>
 
-struct SDL_Surface;
+#include "common.h"
 
-void nacitajMedia();
-void nacitajAdresar(std::string zaznamovyAdresar);
-void vykresluj(SDL_Surface *screen, double now);
+struct KruhovyObjekt {
+  int typ;
+
+  Bod pozicia;
+  double polomer;
+
+  KruhovyObjekt(int typ, Bod pozicia, double polomer) {
+    this->typ = typ;
+    this->pozicia = pozicia;
+    this->polomer = polomer;
+  }
+};
+
+struct Frame {
+  vector<KruhovyObjekt> kruhoveObjekty;
+
+  void kresli(SDL_Surface *surface);
+};
+
+struct Hra {
+  vector<Frame> framy;
+
+  void nacitajSubor(string zaznamovySubor);
+};
 
 #endif

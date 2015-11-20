@@ -1,4 +1,3 @@
-
 #include <cstdio>
 #include <cstring>
 #include <cmath>
@@ -23,12 +22,46 @@ template<class T> void checkStream(T& s, string filename) {
   }
 }
 
-void nacitajMedia() {
+void Hra::nacitajSubor(string zaznamovySubor) {
+  framy.clear();
+
+  ifstream subor(zaznamovySubor);
+
+  Frame frame;
+
+  string riadok;
+  while (getline(subor, riadok)) {
+    if (riadok == "") {   // prazdny riadok znamena ukoncenie jedneho framu
+      framy.push_back(frame);
+      frame.kruhoveObjekty.clear();
+      continue;
+    }
+
+    stringstream riadokStream(riadok);
+    int typ;
+    Bod pozicia;
+    double polomer;
+    riadokStream >> typ >> pozicia.x >> pozicia.y >> polomer;
+
+    frame.kruhoveObjekty.push_back(KruhovyObjekt(typ, pozicia, polomer));
+  }
+  subor.close();
 }
 
+//
+// pomocne funkcie na kreslenie jednotlivych objektov
+//
 
-void nacitajAdresar(string zaznamovyAdresar) {
+void kresliHraca(KruhovyObjekt &objekt, SDL_Surface *surface) {
+  //TODO
 }
 
-void vykresluj(SDL_Surface *screen, double dnow) {
+//
+// hlavna funkcia na nakreslenie vsetkeho
+//
+
+void Frame::kresli(SDL_Surface *surface) {
+  for (KruhovyObjekt &objekt: kruhoveObjekty) {
+    //TODO
+  }
 }
