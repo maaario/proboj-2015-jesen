@@ -86,6 +86,16 @@ bool FyzikalnyObjekt::neznicitelny () const {
 }
 
 
+Vybuch::Vybuch () {}
+
+Vybuch::Vybuch (const int& own,const Bod& kde,const double& r,const double& dmg,const int& f) :
+  owner(own), pozicia(kde), polomer(r), sila(dmg), faza(f)
+{
+  id=volne_id;
+  volne_id++;
+}
+
+
 Vec::Vec (const Bod& poz,const int& t,const int& ammo) : typ(t), naboje(ammo)
 {
   obj= FyzikalnyObjekt(VEC,-1, poz, Bod(), VEC_POLOMER, VEC_KOLIZNY_LV, VEC_SILA, VEC_ZIVOTY);

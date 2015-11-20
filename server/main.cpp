@@ -125,12 +125,17 @@ int main(int argc, char *argv[]) {
       nacitaj(buf,akcie[kolkaty]);
 
       //log("klient \"%s\" napisal: %s", klient.getLabel().c_str(),odpoved.c_str());
+      Hrac temp= stav.hraci[0];
+      stav.hraci[0]= stav.hraci[kolkaty];
+      stav.hraci[kolkaty]= temp;
+      popisStavu.str("");
+      uloz(popisStavu,stav);
       klient.posli(popisStavu.str().c_str());
+      stav.hraci[kolkaty]=stav.hraci[0];
+      stav.hraci[0]=temp;
     }
 
     odsimuluj(mapa,stav,akcie);
-    popisStavu.str("");
-    uloz(popisStavu,stav);
 
     //cleanup
     akcie.clear();

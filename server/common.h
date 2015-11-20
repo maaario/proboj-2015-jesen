@@ -8,12 +8,10 @@
 using namespace std;
 
 #define INF 1023456789ll
-#define INDESTRUCTIBLE 987654321ll
-#define COOLDOWN 25
-#define BROKOV_NA_ZACIATKU 20
 
-#define VSETKO_TYPOV 10
-#define STAV_TYPOV 6
+
+#define VSETKO_TYPOV 9
+#define STAV_TYPOV 5
 #define MAPA_TYPOV 3
 
 #define ASTEROID 0
@@ -21,11 +19,10 @@ using namespace std;
 #define HVIEZDA 2
 #define BOSS 3
 #define PROJEKTIL 4
-#define EXPLOZIA 5
-#define BROK 6
-#define BOMBA 7
-#define VEC 8
-#define LOD 9
+#define BROK 5
+#define BOMBA 6
+#define VEC 7
+#define LOD 8
 
 #define DRUHOV_ZBRANI 3
 #define DRUHOV_PROJ 2
@@ -67,16 +64,27 @@ const static double z_polomer[DRUHOV_PROJ]= {5.0, 6.0};
 const static int z_kolizny_lv[DRUHOV_PROJ]= {0, 0};
 const static double z_sila[DRUHOV_PROJ]= {10.0, 0.0};
 const static double z_zivoty[DRUHOV_PROJ]= {0.0001, 0.0001};
-const static double z_rychlost[DRUHOV_PROJ]= {0.5, 0.2};
+const static double z_rychlost[DRUHOV_PROJ]= {1.0, 0.4};
 
-// parametre ostatnych zbrani
-#define LASER_SILA 1.0
+// parametre ostatnych nebezpecnych veci
+#define LASER_SILA 0.5
+#define VYBUCH_SILA 5.0
 
 // parametre tykajuce sa bodovania
 const static double body_za_znic[VSETKO_TYPOV] =
-  {10.0, 500.0, INF, 5000.0, INF, INF, 0,0,0, 5000.0};
+  {10.0, 500.0, INF, 5000.0, INF, 0,0,0, 500.0};
+
+// ine parametre
+#define INDESTRUCTIBLE 987654321ll
+#define COOLDOWN 25
+#define BROKOV_NA_ZACIATKU 20
+#define NORM_TYPOV 4
+const static int norm_typy[NORM_TYPOV] =
+  {ASTEROID,PLANETA,HVIEZDA,PROJEKTIL};
+
 
 int zbran_na_proj (const int& typ_zbrane) ;
+
 
 struct Bod {
   double x, y;
@@ -121,6 +129,18 @@ struct FyzikalnyObjekt {
 
   bool zije () const ;
   bool neznicitelny () const ;
+};
+
+struct Vybuch {
+  int owner;
+  int id;
+  Bod pozicia;
+  double polomer;
+  double sila;
+  int faza;
+
+  Vybuch () ;
+  Vybuch (const int& own,const Bod& kde,const double& r,const double& dmg,const int& f) ;
 };
 
 struct Vec {
@@ -174,13 +194,7 @@ struct Mapa { //TODO: popis spawnovania asteroidov
 struct Stav {
   int cas;
   vector<FyzikalnyObjekt> obj[STAV_TYPOV];
-  /*
-  vector<FyzikalnyObjekt> asteroidy;
-  vector<FyzikalnyObjekt> planety;
-  vector<FyzikalnyObjekt> hviezdy;
-  vector<FyzikalnyObjekt> bossovia;
-  vector<FyzikalnyObjekt> projektily;
-  */
+  vector<Vybuch> vybuchy;
   vector<Vec> veci;
   vector<Hrac> hraci;
 
@@ -210,6 +224,15 @@ reflection(FyzikalnyObjekt);
   member(sila);
   member(zivoty);
   member(stit);
+end();
+
+reflection(Vybuch);
+  member(owner);
+  member(id);
+  member(pozicia);
+  member(polomer);
+  member(sila);
+  member(faza);
 end();
 
 reflection(Vec);
@@ -249,6 +272,7 @@ reflection(Stav);
   member(obj[HVIEZDA]);
   member(obj[BOSS]);
   member(obj[PROJEKTIL]);
+  member(vybuchy);
   member(veci);
   member(hraci);
 end();

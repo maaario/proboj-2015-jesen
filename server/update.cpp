@@ -14,11 +14,8 @@ using namespace std;
 static ostream* g_observation;
 void zapniObservation(ostream* observation) { g_observation = observation; }
 
-bool lezivMape (const Mapa& mapa, const Bod& b) {
-  return (b.x>=0 && b.x<=mapa.w && b.y>=0 && b.y<=mapa.h);
-}
-
-bool zrazka (const FyzikalnyObjekt& A, const FyzikalnyObjekt& B) {
+template<class T1, class T2>
+bool zrazka (const T1& A, const T2& B) {
   Bod spojnica = A.pozicia - B.pozicia;
   return A.polomer + B.polomer > spojnica.dist();
 }
@@ -110,8 +107,9 @@ void odsimuluj(const Mapa& mapa, Stav& stav, vector<Prikaz>& akcie) {
   //
   vector<FyzikalnyObjekt*> objekty;
   vector<Bod> zrychl;
-  for (int t=0; t<STAV_TYPOV-1; t++) {
-    for (FyzikalnyObjekt& obj : stav.obj[t]) {
+  for (int t=0; t<NORM_TYPOV; t++) {
+    int typ = norm_typy[t];
+    for (FyzikalnyObjekt& obj : stav.obj[typ]) {
       objekty.push_back(&obj);
       zrychl.push_back(Bod());
     }
@@ -171,6 +169,20 @@ void odsimuluj(const Mapa& mapa, Stav& stav, vector<Prikaz>& akcie) {
       }
       zrychl[i]= zrychl[i]+acc;
     }
+
+    // hori? (je vo vybuchu?)
+    //
+    if (! prvy->neznicitelny() ) {
+      for (Vybuch& bum : stav.vybuchy) {
+        if (!zrazka(bum,*prvy)) {
+          continue;
+        }
+        double damage= bum.sila;
+        prvy->zivoty-= damage;
+        skore[bum.owner]+= damage;
+      }
+    }
+
     for (int j=0; j<(int)skore.size(); j++) {
       if (!prvy->zije()) {
         skore[j]+= body_za_znic[prvy->typ];
@@ -314,6 +326,10 @@ void odsimuluj(const Mapa& mapa, Stav& stav, vector<Prikaz>& akcie) {
     stav.veci.pop_back();
   }
 
+  // cleanup
+  for (Hrac& hrac : stav.hraci) {
+    hrac.cooldown--;
+  }
 
   //*
   for (int i=0; i<(int)stav.hraci.size(); i++) {
