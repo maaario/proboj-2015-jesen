@@ -4,8 +4,6 @@
 
 #include <string>
 
-#define INF 1023456789ll
-
 void inicializujSignaly(void (*cleanupFunkcia)());
 
 #ifdef NELOGUJ

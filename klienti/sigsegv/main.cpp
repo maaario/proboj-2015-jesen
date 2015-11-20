@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 #include <unistd.h>
 #include <ctime>
 
@@ -26,7 +27,7 @@ int main() {
   nacitaj(cin,mapa);
   fprintf(stderr, "START pid=%d, seed=%u\n", getpid(), seed);
 
-  while (cin.good()) {    
+  while (cin.good()) {
     nacitaj(cin,stav);
 
     zistiTah();
@@ -34,7 +35,7 @@ int main() {
     uloz(cout,prikaz);
     cout << endl;
 
-    if (rand()%100==0) {
+    if (rand()%1==0) {
       int f=0;
       cout << 10/f;
     }

@@ -9,28 +9,47 @@
 #include <cstdio>
 #include <cmath>
 
-#define POMALOST_CASU 10ll
-#define MAX_ACCEL 1.0
+#define INF 1023456789ll
+#define INDESTRUCTIBLE 987654321ll
 
-//rozne typy objektov
-#define TYP_LOD 0
-#define TYP_ASTEROID 100
-#define TYP_PLANETA 200
-#define TYP_HVIEZDA 300
+#define STAV_TYPOV 5
+#define MAPA_TYPOV 3
 
-#define TYP_LASER 400
-#define TYP_RAKETA 500
-#define TYP_MINA 600
+#define ASTEROID 0
+#define PLANETA 1
+#define HVIEZDA 2
+#define BOSS 3
+#define PROJEKTIL 4
+#define BROK 5
+#define BOMBA 6
+#define VEC 7
+#define LOD 8
 
-#define TYP_URYCHLOVAC 700
-#define TYP_STIT 800
-#define TYP_LEKARNICKA 900
+#define DRUHOV_ZBRANI 3
+#define ZBRAN_PUSKA 0
+#define ZBRAN_LASER 1
+#define ZBRAN_BOMBA 2
+
+#define DRUHOV_VECI 3
+#define VEC_URYCHLOVAC 0
+#define VEC_STIT 1
+#define VEC_LEKARNICKA 2
 
 //parametre lode
 #define LOD_POLOMER 10.0
 #define LOD_KOLIZNY_LV 10
-#define LOD_NEBEZPECNOST 10.0
+#define LOD_SILA 10.0
 #define LOD_ZIVOTY 100.0
+
+//parametre sentinelu
+#define SENTINEL_POLOMER 10.0
+#define SENTINEL_SILA 10.0
+
+//parametre veci
+#define VEC_POLOMER 10.0
+#define VEC_KOLIZNY_LV 5
+#define VEC_SILA 10.0
+#define VEC_ZIVOTY 100.0
 
 struct Bod {
   double x, y;
@@ -60,6 +79,19 @@ struct Bod {
   double dist() const {
     return sqrt(x*x + y*y);
   }
+
+  Bod operator*(const Bod& B) const { // A a B zacinaju v rovn. bode, kolmica z B na A tvori 2. bod vysl. vektoru
+    double skalarnySucin = x*B.x + y*B.y;
+    double dlzka = skalarnySucin / B.dist();
+    return B*(dlzka / B.dist());
+  }
+  double operator/(const Bod& B) const { // kolkonasobok B tvori so mnou pravouhly trojuholnik ?
+    Bod temp = (*this)*B;
+    if (temp.x == 0.0) {
+      return temp.y/B.y;
+    }
+    return temp.x/B.x;
+  }
 };
 
 struct FyzikalnyObjekt {
@@ -71,74 +103,100 @@ struct FyzikalnyObjekt {
 
   int koliznyLevel;
 
-  double tvrdost;
+  double sila;
   double zivoty;
+  int stit;
 
   FyzikalnyObjekt (const int& t, const Bod& poz,const Bod& v,const double& r,
-  const double& coll, const double& hard,const double& hp) :
+  const int& coll, const double& pow,const double& hp) :
     typ(t),
     pozicia(poz), rychlost(v), polomer(r),
     koliznyLevel(coll),
-    tvrdost(hard), zivoty(hp) {}
+    sila(pow), zivoty(hp), stit(0) {}
 
   FyzikalnyObjekt () {}
 
   bool zije () {
     return zivoty > 0;
   }
+  bool neznicitelny () {
+    return stit>0 || zivoty>INDESTRUCTIBLE;
+  }
 };
 
 struct Vec {
+  FyzikalnyObjekt obj;
   int typ;
-  double zivotnost;
+  int naboje;
 
-  Vec (const int& t,const double& ziv) : typ(t), zivotnost(ziv) {}
+  Vec (const Bod& poz,const int& t,const int& ammo) : typ(t), naboje(ammo)
+  {
+    obj= FyzikalnyObjekt(VEC, poz, Bod(), VEC_POLOMER, VEC_KOLIZNY_LV, VEC_SILA, VEC_ZIVOTY);
+  }
   Vec () {}
 
   bool zije () {
-    return zivotnost > 0;
+    return obj.zije();
   }
 };
 
 struct Hrac {
   FyzikalnyObjekt obj;
   double skore;
-  vector<Vec> zbrane;
-  vector<Vec> veci;
 
-  Hrac (const Bod& poz) {
-    obj=FyzikalnyObjekt(TYP_LOD, poz, Bod(), LOD_POLOMER, LOD_KOLIZNY_LV, LOD_NEBEZPECNOST, LOD_ZIVOTY);
-    skore= 0.0;
+  vector<int> zbrane;
+  int cooldown;
+  vector<int> veci;
+
+  Hrac (const Bod& poz) : skore(0.0), zbrane(DRUHOV_ZBRANI), cooldown(0), veci(DRUHOV_VECI)
+  {
+    obj=FyzikalnyObjekt(LOD, poz, Bod(), LOD_POLOMER, LOD_KOLIZNY_LV, LOD_SILA, LOD_ZIVOTY);
   }
   Hrac () {}
+
+  bool zije () {
+    return obj.zije();
+  }
 };
 
 struct Prikaz {
-  Bod acc, ciel;
+  Bod acc;
+
+  Bod ciel;
   int pal;
+
   vector<int> pouzi;
 
-  Prikaz () : acc(Bod()), ciel(Bod()), pal(-1) {}
+  Prikaz () : acc(Bod()), ciel(Bod()), pal(-1), pouzi(DRUHOV_VECI) {}
 };
 
-struct Mapa {
+struct Mapa { //TODO: popis spawnovania asteroidov
   double w,h;
-  double casDoChrchliaka;
+  vector<int> casBoss;
   vector<Bod> spawny;
   vector<FyzikalnyObjekt> objekty;
+  vector<Vec> veci;
 
-  Mapa (const double& sirka,const double& vyska,const double& t) :
-  w(sirka), h(vyska), casDoChrchliaka(t) {}
+  Mapa (const double& sirka,const double& vyska) :
+    w(sirka), h(vyska) {}
 
-  Mapa () {}
+  Mapa () : w(-1), h(-1) {}
 };
 
 struct Stav {
-  double cas;
-  vector<FyzikalnyObjekt> objekty;
+  int cas;
+  vector<FyzikalnyObjekt> obj[STAV_TYPOV];
+  /*
+  vector<FyzikalnyObjekt> asteroidy;
+  vector<FyzikalnyObjekt> planety;
+  vector<FyzikalnyObjekt> hviezdy;
+  vector<FyzikalnyObjekt> bossovia;
+  vector<FyzikalnyObjekt> projektily;
+  */
+  vector<Vec> veci;
   vector<Hrac> hraci;
 
-  Stav () : cas(0.0) {}
+  Stav () {}
 };
 
 #endif
@@ -157,19 +215,22 @@ reflection(FyzikalnyObjekt);
   member(rychlost);
   member(polomer);
   member(koliznyLevel);
-  member(tvrdost);
+  member(sila);
   member(zivoty);
+  member(stit);
 end();
 
 reflection(Vec);
+  member(obj);
   member(typ);
-  member(zivotnost);
+  member(naboje);
 end();
 
 reflection(Hrac);
   member(obj);
   member(skore);
   member(zbrane);
+  member(cooldown);
   member(veci);
 end();
 
@@ -183,14 +244,20 @@ end();
 reflection(Mapa);
   member(w);
   member(h);
-  member(casDoChrchliaka);
+  member(casBoss);
   member(spawny);
   member(objekty);
+  member(veci);
 end();
 
 reflection(Stav);
   member(cas);
-  member(objekty);
+  member(obj[ASTEROID]);
+  member(obj[PLANETA]);
+  member(obj[HVIEZDA]);
+  member(obj[BOSS]);
+  member(obj[PROJEKTIL]);
+  member(veci);
   member(hraci);
 end();
 

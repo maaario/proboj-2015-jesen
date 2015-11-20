@@ -40,54 +40,48 @@ int main(int argc, char *argv[]) {
   log("startujem server, seed = %u", seed);
   inicializujSignaly(zabiKlientov);
 
-  //
-  // zaznamovy adresar
-  //
-
-  string zaznamovyAdresar(argv[1]);
+  // nacitaj mapu
   string mapovySubor(argv[2]);
-
-  //
-  // nacitame klientov
-  //
-  vector<string> klientskeAdresare;
-  for (int i = 3; i < argc; ++i) {
-    klientskeAdresare.push_back(string(argv[i]));
-  }
-
-  //nacitaj mapu
   Mapa mapa;
-  nacitajMapu(mapa,mapovySubor);
+  if (!nacitajMapu(mapa,mapovySubor)) {
+    return 1;
+  }
   stringstream popisMapy;
   uloz(popisMapy,mapa);
+  
+  // zostroj pociatocny stav
+  Stav stav;
+  if (!pociatocnyStav(mapa,stav,klienti.size()) ) {
+    return 1;
+  }
+  stringstream popisStavu;
+  uloz(popisStavu,stav);
 
+  // vytvor zaznamovy adresar
+  string zaznamovyAdresar(argv[1]);
   if (!jeAdresar(zaznamovyAdresar)) {
     if (mkdir(zaznamovyAdresar.c_str(), 0777)) {
       fprintf(stderr, "mkdir: %s: %s\n", zaznamovyAdresar.c_str(), strerror(errno));
       return 1;
     }
   }
-  for (int i = 0; i < klientskeAdresare.size(); ++i) {
+
+  // nacitame klientov
+  vector<string> klientskeAdresare;
+  for (int i = 3; i < argc; ++i) {
+    klientskeAdresare.push_back(string(argv[i]));
+  }
+  for (int i = 0; i < (int)klientskeAdresare.size(); ++i) {
     klienti.push_back(Klient(itos(i), klientskeAdresare[i], zaznamovyAdresar));
   }
-  
-  //eliminovat "baklazan je najlepsi, tak ho fokusneme"
   random_shuffle(klienti.begin(),klienti.end());
 
-  //zostroj pociatocny stav
-  Stav stav;
-  pociatocnyStav(mapa,stav,klienti.size());
-  stringstream popisStavu;
-  uloz(popisStavu,stav);
-
-  //
   // spustime klientov
-  //
   log("spustam klientov");
   for (Klient &klient: klienti) {
     klient.spusti();
 
-    //posli pociatocny stav
+    //ak mi klient dosial zomrel, tak...
     klient.posli(popisMapy.str().c_str());
     klient.posli(popisStavu.str().c_str());
   }
@@ -99,32 +93,23 @@ int main(int argc, char *argv[]) {
   const long long ups = 100LL;   // updates per second
   const long long delta_time = 1000LL / ups;
   long long last_time = gettime();
-  long long tick = 0;
 
   vector<Prikaz> akcie;
 
   while (true) {
-    // pockame, aby sme dodrzovali zelane UPS
-    long long current_time = gettime();
-    if (current_time < last_time + delta_time) {
-      long long remaining_ms = (last_time + delta_time) - current_time;
-      usleep(remaining_ms * 1000LL);
-    }
-    tick += 1;
-
-    popisStavu.str("");
-    uloz(popisStavu,stav);
 
     for (Klient &klient: klienti) {
       int kolkaty = akcie.size();
       akcie.push_back(Prikaz());
       
       if (klient.nebezi()) {
-        klient.restartuj(current_time);
+        klient.restartuj(stav.cas);
+        /*
         if (!klient.nebezi()) {
           klient.posli(popisMapy.str().c_str());
           klient.posli(popisStavu.str().c_str());
         }
+        */
         continue;
       }
       
@@ -140,12 +125,20 @@ int main(int argc, char *argv[]) {
       klient.posli(popisStavu.str().c_str());
     }
 
-    current_time = gettime();
-    odsimuluj(mapa,stav,akcie,current_time - last_time);
-    last_time = current_time;
+    odsimuluj(mapa,stav,akcie);
+    popisStavu.str("");
+    uloz(popisStavu,stav);
 
     //cleanup
     akcie.clear();
+
+    // pockame, aby sme dodrzovali zelane UPS
+    long long current_time = gettime();
+    if (current_time < last_time + delta_time) {
+      long long remaining_ms = (last_time + delta_time) - current_time;
+      usleep(remaining_ms * 1000LL);
+    }
+    last_time = gettime();
   }
 
   //

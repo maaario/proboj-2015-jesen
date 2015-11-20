@@ -5,8 +5,8 @@ strip_trailing_spaces=false
 replace_tabs=false
 
 [indentation]
-indent_width=4
-indent_type=1
+indent_width=2
+indent_type=0
 indent_hard_tab_width=8
 detect_indent=false
 detect_indent_width=false
@@ -16,12 +16,13 @@ indent_mode=2
 name=klienti
 base_path=/home/bui/Documents/ksp/proboj-2015-jesen/klienti
 description=
+file_patterns=
 
 [long line marker]
 long_line_behaviour=1
 long_line_column=72
 
 [files]
-current_page=0
-FILE_NAME_0=341;C++;0;EUTF-8;1;1;1;%2Fhome%2Fbui%2FDocuments%2Fksp%2Fproboj-2015-jesen%2Fklienti%2Ftemplate%2Fmain.cpp;0;4
-FILE_NAME_1=638;C++;0;EUTF-8;1;1;1;%2Fhome%2Fbui%2FDocuments%2Fksp%2Fproboj-2015-jesen%2Fklienti%2Fsigsegv%2Fmain.cpp;0;4
+current_page=1
+FILE_NAME_0=341;C++;0;EUTF-8;0;1;1;%2Fhome%2Fbui%2FDocuments%2Fksp%2Fproboj-2015-jesen%2Fklienti%2Ftemplate%2Fmain.cpp;0;2
+FILE_NAME_1=612;C++;0;EUTF-8;0;1;1;%2Fhome%2Fbui%2FDocuments%2Fksp%2Fproboj-2015-jesen%2Fklienti%2Fsigsegv%2Fmain.cpp;0;2

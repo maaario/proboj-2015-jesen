@@ -5,6 +5,6 @@
 
 #include "common.h"
 
-void nacitajMapu(Mapa& mapa, std::string filename);
+bool nacitajMapu(Mapa& mapa, std::string filename);
 
 #endif
