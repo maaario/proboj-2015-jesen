@@ -10,11 +10,16 @@ using namespace std;
 #include "common.h"
 #include "update.h"
 #include "util.h"
+#include "marshal.h"
 
 #define PRESNOST 100
 
 static ostream* g_observation;
-void zapniObservation(ostream* observation) { g_observation = observation; }
+static int frame_time;
+void zapniObservation(ostream* observation, const int& ft) {
+  g_observation = observation;
+  frame_time=ft;
+}
 
 
 double rand_float (const double& d) {
@@ -476,7 +481,7 @@ void odsimuluj(const Mapa& mapa, Stav& stav, vector<Prikaz>& akcie) {
     stav.obj[ASTEROID].push_back(vytvorAst(kde,kam,polomer));
   }
 
-  //*
+  /*
   for (int i=0; i<(int)stav.hraci.size(); i++) {
     if (!stav.hraci[i].zije()) {
       log("hrac %d (majitel lode je hrac %d) je mrtvy",stav.hraci[i].obj.id,stav.hraci[i].obj.owner);
@@ -488,6 +493,11 @@ void odsimuluj(const Mapa& mapa, Stav& stav, vector<Prikaz>& akcie) {
       stav.hraci[i].obj.zivoty);
   }
   //*/
+
+  if (stav.cas%frame_time == 0) {
+    uloz(*g_observation,stav);
+    *g_observation << "\n" << endl;
+  }
 }
 
 

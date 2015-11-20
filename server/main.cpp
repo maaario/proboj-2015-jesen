@@ -89,6 +89,11 @@ int main(int argc, char *argv[]) {
     klient.posli(popisStavu.str().c_str());
   }
 
+  const long long fps = 25LL;
+  const long long frame_time = 1000LL / fps;
+  ofstream observationstream((zaznamovyAdresar+"/observation").c_str());
+  zapniObservation(&observationstream,frame_time);
+
   //
   // hlavny cyklus
   //
@@ -149,11 +154,12 @@ int main(int argc, char *argv[]) {
     last_time = gettime();
   }
 
-  //
-  // zabijeme klientov
+  // end step
   //
   log("ukoncujeme klientov");
   zabiKlientov();
+  
+  observationstream.close();
 
   return 0;
 }
