@@ -84,7 +84,9 @@ bool FyzikalnyObjekt::zije () const {
 bool FyzikalnyObjekt::neznicitelny () const {
   return stit>0 || zivoty>INDESTRUCTIBLE;
 }
-
+double FyzikalnyObjekt::obsah () const {
+  return PII*polomer*polomer;
+}
 
 Vybuch::Vybuch () {}
 
@@ -112,6 +114,7 @@ Hrac::Hrac (const Bod& poz) : skore(0.0), zbrane(DRUHOV_ZBRANI,0), cooldown(0), 
   obj=FyzikalnyObjekt(LOD,volny_hrac, poz, Bod(), LOD_POLOMER, LOD_KOLIZNY_LV, LOD_SILA, LOD_ZIVOTY);
   volny_hrac++;
   zbrane[ZBRAN_PUSKA]= BROKOV_NA_ZACIATKU;
+  zbrane[ZBRAN_BOMBA]= 1000;
 }
 Hrac::Hrac () {}
 

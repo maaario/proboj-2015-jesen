@@ -8,11 +8,12 @@
 using namespace std;
 
 #define INF 1023456789ll
+#define PII 3.14159265358979323846
 
 
 #define VSETKO_TYPOV 9
 #define STAV_TYPOV 5
-#define MAPA_TYPOV 3
+#define MAPA_TYPOV 4
 
 #define ASTEROID 0
 #define PLANETA 1
@@ -35,6 +36,15 @@ using namespace std;
 #define VEC_STIT 1
 #define VEC_LEKARNICKA 2
 
+// parametre asteroidu
+#define AST_MIN_R 5.0
+#define AST_MAX_R 50.0
+#define AST_KOLIZNY_LV 10
+#define AST_SILA 10.0
+#define AST_ZIV_RATE 10.0
+#define AST_DROP_RATE 0.02
+#define AST_ROZPAD_ACC 0.5
+
 // parametre lode
 #define LOD_POLOMER 10.0
 #define LOD_KOLIZNY_LV 10
@@ -51,6 +61,8 @@ using namespace std;
 #define VEC_KOLIZNY_LV 5
 #define VEC_SILA 0.0
 #define VEC_ZIVOTY 100.0
+const static int vec_nabojov[DRUHOV_ZBRANI+DRUHOV_VECI]=
+  {20,2,5, 2,2,2};
 
 // parametre bossa
 #define BOSS_POLOMER 30.0
@@ -60,6 +72,9 @@ using namespace std;
 #define BOSS_MAX_ACC 0.0015
 
 // parametre projektilov
+#define BUM_POLOMER 30.0
+#define BUM_SILA 5.0
+#define BUM_TRVANIE 50
 const static double z_polomer[DRUHOV_PROJ]= {5.0, 6.0};
 const static int z_kolizny_lv[DRUHOV_PROJ]= {0, 0};
 const static double z_sila[DRUHOV_PROJ]= {10.0, 0.0};
@@ -68,7 +83,6 @@ const static double z_rychlost[DRUHOV_PROJ]= {1.0, 0.4};
 
 // parametre ostatnych nebezpecnych veci
 #define LASER_SILA 0.5
-#define VYBUCH_SILA 5.0
 
 // parametre tykajuce sa bodovania
 const static double body_za_znic[VSETKO_TYPOV] =
@@ -79,6 +93,8 @@ const static double body_za_znic[VSETKO_TYPOV] =
 #define COOLDOWN 25
 #define BROKOV_NA_ZACIATKU 20
 #define NORM_TYPOV 4
+#define CAS_ASTEROID 50
+#define AST_MAX_V 1.0
 const static int norm_typy[NORM_TYPOV] =
   {ASTEROID,PLANETA,HVIEZDA,PROJEKTIL};
 
@@ -129,6 +145,7 @@ struct FyzikalnyObjekt {
 
   bool zije () const ;
   bool neznicitelny () const ;
+  double obsah () const ;
 };
 
 struct Vybuch {

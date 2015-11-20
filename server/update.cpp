@@ -11,8 +11,23 @@ using namespace std;
 #include "update.h"
 #include "util.h"
 
+#define PRESNOST 100
+
 static ostream* g_observation;
 void zapniObservation(ostream* observation) { g_observation = observation; }
+
+
+double rand_float (const double& d) {
+  return (double)(rand()%int(1.0 + d*PRESNOST))/(double)PRESNOST;
+}
+
+int konvertdoStavu (const int& typ) {
+  if (typ==BROK || typ==BOMBA) {
+    return PROJEKTIL;
+  }
+  return typ;
+}
+
 
 template<class T1, class T2>
 bool zrazka (const T1& A, const T2& B) {
@@ -72,6 +87,87 @@ Bod odpal2 (const FyzikalnyObjekt& A, const FyzikalnyObjekt& B) {
 }
 
 
+
+Vec vytvorVec(const Bod& poz,const Bod& rychl) {
+  int typ= rand()%(DRUHOV_ZBRANI+DRUHOV_VECI);
+  int nabojov= int(vec_nabojov[typ]/2);
+  if (nabojov<1) {
+    nabojov=1;
+  }
+  nabojov+= rand()%(1+vec_nabojov[typ]-nabojov);
+  Vec res(poz,typ,nabojov);
+  res.obj.rychlost= rychl;
+  return res;
+}
+
+FyzikalnyObjekt vytvorAst(const Bod& poz,const Bod& rychl, const double& r) {
+  double zivoty= AST_ZIV_RATE*r;
+  FyzikalnyObjekt res(ASTEROID,-1, poz,rychl,r, AST_KOLIZNY_LV, AST_SILA, zivoty);
+  return res;
+}
+
+void rozpad(const FyzikalnyObjekt& obj, vector<FyzikalnyObjekt>& vznikleObjekty, vector<Vec>& vznikleVeci) {
+  if (!(obj.typ==ASTEROID || obj.typ==PLANETA)) {
+    return;
+  }
+  if (obj.polomer/2 < AST_MIN_R) {
+    if (rand_float(1.0) < obj.obsah()*AST_DROP_RATE) {
+      vznikleVeci.push_back(vytvorVec(obj.pozicia,obj.rychlost));
+    }
+    return;
+  }
+  vznikleObjekty.push_back(vytvorAst(obj.pozicia,obj.rychlost,obj.polomer));
+  
+  vector<pair<bool,Bod> > pozy;
+  {
+    vector<int> moznePozy;
+    for (int i=0; i<PRESNOST; i++) {
+      moznePozy.push_back(i);
+    }
+    while (moznePozy.size()>0) {
+      int n= moznePozy.size();
+      int kde=rand()%n;
+      kde= moznePozy[kde];
+      double uhol= 2.0*PII*(double)kde/(double)PRESNOST;
+      Bod pozicia(0.75*obj.polomer*sin(uhol), 0.75*obj.polomer*cos(uhol));
+
+      bool jeVec= (rand_float(1.0) < obj.obsah()*AST_DROP_RATE);
+      pozy.push_back(make_pair(jeVec,pozicia));
+      
+      int obsadenyUsek= PRESNOST;
+      if (jeVec) {
+        obsadenyUsek*= VEC_POLOMER;
+        obsadenyUsek/=(0.25*obj.polomer);
+      }
+      obsadenyUsek/=7;
+        
+      vector<int> novePozy;
+      for (int& val : moznePozy) {
+        if (abs(val-kde)<obsadenyUsek) {
+          continue;
+        }
+        novePozy.push_back(val);
+      }
+      moznePozy.swap(novePozy);
+    }
+  }
+  for (int i=0; i<(int)pozy.size(); i++) {
+    Bod poz= pozy[i].second;
+    double acc= rand_float(AST_ROZPAD_ACC);
+    double uhol= rand_float(2.0*PII);
+    Bod rychl(acc*sin(uhol),acc*cos(uhol));
+
+    bool jeVec= pozy[i].first;
+    if (jeVec) {
+      vznikleVeci.push_back(vytvorVec(poz,rychl));
+    }
+    else {
+      if (obj.polomer/4 >= AST_MIN_R) {
+        vznikleObjekty.push_back(vytvorAst(poz,rychl,obj.polomer/4));
+      }
+    }
+  }
+}
 
 void odsimuluj(const Mapa& mapa, Stav& stav, vector<Prikaz>& akcie) {
   // axiomy:
@@ -199,58 +295,61 @@ void odsimuluj(const Mapa& mapa, Stav& stav, vector<Prikaz>& akcie) {
 
   // vypal zo zbrani
   //
-  vector<FyzikalnyObjekt*> vznikleObjekty;
-  for (int i=0; i<(int)akcie.size(); i++) {
-    int pal= akcie[i].pal;
-    Bod ciel= akcie[i].ciel;
-    
-    if (pal==-1) {
-      continue;
-    }
-    int owner= stav.hraci[i].obj.owner;
-    Bod poz= stav.hraci[i].obj.pozicia;
-    Bod rychl= stav.hraci[i].obj.rychlost;
-    double polomer= stav.hraci[i].obj.polomer;
-    
-    Bod smer= ciel-poz;
-    double safedist= polomer+1.0 + (pal<DRUHOV_PROJ ? z_polomer[pal] : 0);
-    Bod spawn= poz + smer*(safedist/smer.dist());
-
-    if (pal<DRUHOV_PROJ) {
-      smer=smer*(z_rychlost[pal]/smer.dist());
-      Bod p_rychl= rychl+smer;
-      FyzikalnyObjekt strela( zbran_na_proj(pal), owner,spawn, p_rychl, z_polomer[pal], z_kolizny_lv[pal], z_sila[pal], z_zivoty[pal]);
-      stav.obj[PROJEKTIL].push_back(strela);
-      vznikleObjekty.push_back(&stav.obj[PROJEKTIL].back());
-
-      stav.hraci[i].cooldown= COOLDOWN;
-    }
-    else {
-      if (pal==ZBRAN_LASER) {
-        // laser striela okamzite, prechadza cez vsetko
-        // a je relativne slaby
-        //
-        for (FyzikalnyObjekt* ptr : objekty) {
-          Bod spojnica= ptr->pozicia-spawn;
-          Bod pata= spojnica*smer;
-          Bod kolmica= spojnica-pata;
-          if (pata/spojnica < 0) {
-            continue;
-          }
-          if (kolmica.dist() >= ptr->polomer) {
-            continue;
-          }
-          ptr->zivoty -= LASER_SILA;
-        }
+  {
+    vector<FyzikalnyObjekt*> vznikleObjekty;
+    for (int i=0; i<(int)akcie.size(); i++) {
+      int pal= akcie[i].pal;
+      Bod ciel= akcie[i].ciel;
+      
+      if (pal==-1) {
+        continue;
       }
-      // sem sa daju nastrkat dalsie speci zbrane
-      //
+      int owner= stav.hraci[i].obj.owner;
+      Bod poz= stav.hraci[i].obj.pozicia;
+      Bod rychl= stav.hraci[i].obj.rychlost;
+      double polomer= stav.hraci[i].obj.polomer;
+      
+      Bod smer= ciel-poz;
+      double safedist= polomer+1.0 + (pal<DRUHOV_PROJ ? z_polomer[pal] : 0);
+      Bod spawn= poz + smer*(safedist/smer.dist());
+
+      if (pal<DRUHOV_PROJ) {
+        smer=smer*(z_rychlost[pal]/smer.dist());
+        Bod p_rychl= rychl+smer;
+        FyzikalnyObjekt strela( zbran_na_proj(pal), owner,spawn, p_rychl, z_polomer[pal], z_kolizny_lv[pal], z_sila[pal], z_zivoty[pal]);
+        stav.obj[PROJEKTIL].push_back(strela);
+        vznikleObjekty.push_back(&stav.obj[PROJEKTIL].back());
+
+        stav.hraci[i].cooldown= COOLDOWN;
+      }
+      else {
+        if (pal==ZBRAN_LASER) {
+          // laser striela okamzite, prechadza cez vsetko
+          // a je relativne slaby
+          //
+          for (FyzikalnyObjekt* ptr : objekty) {
+            Bod spojnica= ptr->pozicia-spawn;
+            Bod pata= spojnica*smer;
+            Bod kolmica= spojnica-pata;
+            if (pata/spojnica < 0) {
+              continue;
+            }
+            if (kolmica.dist() >= ptr->polomer) {
+              continue;
+            }
+            ptr->zivoty -= LASER_SILA;
+          }
+        }
+        // sem sa daju nastrkat dalsie speci zbrane
+        //
+      }
     }
-  }
-  // medzi objekty pridaj tie, co prave vznikli
-  while (!vznikleObjekty.empty()) {
-    objekty.push_back(vznikleObjekty.back());
-    vznikleObjekty.pop_back();
+    // medzi objekty pridaj tie, co prave vznikli
+    while (!vznikleObjekty.empty()) {
+      objekty.push_back(vznikleObjekty.back());
+      vznikleObjekty.pop_back();
+    }
+    // end of scope of vznikleObjekty
   }
 
 
@@ -306,29 +405,75 @@ void odsimuluj(const Mapa& mapa, Stav& stav, vector<Prikaz>& akcie) {
     ptr->pozicia= ptr->pozicia + ptr->rychlost;
   }
 
-  // pochovaj mrtve
-  // asteroidy, planety, hviezdy, bossov, projektily, veci
+  // end step
   //
-  for (int t=0; t<STAV_TYPOV; t++) {
-    for (int i=(int)stav.obj[t].size()-1; i>=0; i--) {
-      if (stav.obj[t][i].zije()) {
-        continue;
-      }
-      stav.obj[t][i]= stav.obj[t].back();
-      stav.obj[t].pop_back();
-    }
-  }
-  for (int i=(int)stav.veci.size()-1; i>=0; i--) {
-    if (stav.veci[i].zije()) {
-      continue;
-    }
-    stav.veci[i]= stav.veci.back();
-    stav.veci.pop_back();
-  }
-
-  // cleanup
   for (Hrac& hrac : stav.hraci) {
     hrac.cooldown--;
+  }
+  for (int i=(int)stav.vybuchy.size()-1; i>=0; i--) {
+    stav.vybuchy[i].faza--;
+    if (stav.vybuchy[i].faza<=0) {
+      stav.vybuchy[i]= stav.vybuchy.back();
+      stav.vybuchy.pop_back();
+    }
+  }
+  stav.cas++;
+
+  // cleanup step -- pochovaj mrtve
+  // asteroidy, planety, hviezdy, bossov, projektily, veci
+  //
+  {
+    vector<FyzikalnyObjekt> vznikleObjekty;
+    vector<Vec> vznikleVeci;
+    for (int t=0; t<STAV_TYPOV; t++) {
+      for (int i=(int)stav.obj[t].size()-1; i>=0; i--) {
+        if (stav.obj[t][i].zije()) {
+          continue;
+        }
+        if (stav.obj[t][i].typ == BOMBA) {
+          Vybuch bum(stav.obj[t][i].owner, stav.obj[t][i].pozicia, BUM_POLOMER, BUM_SILA, BUM_TRVANIE);
+          stav.vybuchy.push_back(bum);
+        }
+        rozpad(stav.obj[t][i], vznikleObjekty, vznikleVeci);
+        stav.obj[t][i]= stav.obj[t].back();
+        stav.obj[t].pop_back();
+      }
+    }
+    for (int i=(int)stav.veci.size()-1; i>=0; i--) {
+      if (stav.veci[i].zije()) {
+        continue;
+      }
+      stav.veci[i]= stav.veci.back();
+      stav.veci.pop_back();
+    }
+    for (FyzikalnyObjekt& obj : vznikleObjekty) {
+      int t= konvertdoStavu(obj.typ);
+      stav.obj[t].push_back(obj);
+    }
+    for (Vec& item : vznikleVeci) {
+      stav.veci.push_back(item);
+    }
+    // end of scope of vznikle objekty & vznikle veci
+  }
+
+  if (stav.cas % CAS_ASTEROID == 0) {
+    int DX[4]={0,1,0,-1};
+    int DY[4]={1,0,-1,0};
+    int okraj= rand()%4;
+    double polomer= AST_MIN_R + rand_float(AST_MAX_R-AST_MIN_R);
+    Bod kde(rand_float(mapa.w),rand_float(mapa.h));
+    switch (DX[okraj]) {
+      case 1: kde.x=mapa.w+polomer; break;
+      case -1: kde.x= -polomer;
+    }
+    switch (DY[okraj]) {
+      case 1: kde.y=mapa.h+polomer; break;
+      case -1: kde.y= -polomer;
+    }
+    Bod kam(rand_float(mapa.w),rand_float(mapa.h));
+    kam= kam-kde;
+    kam= kam*(rand_float(AST_MAX_V)/kam.dist());
+    stav.obj[ASTEROID].push_back(vytvorAst(kde,kam,polomer));
   }
 
   //*
@@ -343,11 +488,13 @@ void odsimuluj(const Mapa& mapa, Stav& stav, vector<Prikaz>& akcie) {
       stav.hraci[i].obj.zivoty);
   }
   //*/
-
-  stav.cas++;
 }
 
 
+
+bool validvMape (const int& typ) {
+  return typ<MAPA_TYPOV && typ>=0;
+}
 
 bool pociatocnyStav(Mapa& mapa, Stav& stav, int pocKlientov) {
   stav.cas = 0;
@@ -364,8 +511,8 @@ bool pociatocnyStav(Mapa& mapa, Stav& stav, int pocKlientov) {
   mapa.spawny.clear();
 
   for (int i=0; i<(int)mapa.objekty.size(); i++) {
-    int typ = mapa.objekty[i].typ;
-    if (typ > MAPA_TYPOV || typ < 0) {
+    int typ = konvertdoStavu(mapa.objekty[i].typ);
+    if (!validvMape(typ) ) {
       log("neznamy objekt vo vesmire");
       return false;
     }
