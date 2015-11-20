@@ -40,9 +40,10 @@
 #define LOD_KOLIZNY_LV 10
 #define LOD_SILA 10.0
 #define LOD_ZIVOTY 100.0
+#define LOD_MAX_ACC 0.001
 
 //parametre sentinelu
-#define SENTINEL_POLOMER 10.0
+#define SENTINEL_POLOMER 100.0
 #define SENTINEL_SILA 10.0
 
 //parametre veci

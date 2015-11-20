@@ -48,14 +48,6 @@ int main(int argc, char *argv[]) {
   }
   stringstream popisMapy;
   uloz(popisMapy,mapa);
-  
-  // zostroj pociatocny stav
-  Stav stav;
-  if (!pociatocnyStav(mapa,stav,klienti.size()) ) {
-    return 1;
-  }
-  stringstream popisStavu;
-  uloz(popisStavu,stav);
 
   // vytvor zaznamovy adresar
   string zaznamovyAdresar(argv[1]);
@@ -75,6 +67,14 @@ int main(int argc, char *argv[]) {
     klienti.push_back(Klient(itos(i), klientskeAdresare[i], zaznamovyAdresar));
   }
   random_shuffle(klienti.begin(),klienti.end());
+
+  // zostroj pociatocny stav
+  Stav stav;
+  if (!pociatocnyStav(mapa,stav,klienti.size()) ) {
+    return 1;
+  }
+  stringstream popisStavu;
+  uloz(popisStavu,stav);
 
   // spustime klientov
   log("spustam klientov");
@@ -121,7 +121,7 @@ int main(int argc, char *argv[]) {
       buf << odpoved;
       nacitaj(buf,akcie[kolkaty]);
 
-      log("klient \"%s\" napisal: %s", klient.getLabel().c_str(), odpoved.c_str());
+      //log("klient \"%s\" napisal: %s", klient.getLabel().c_str(),odpoved.c_str());
       klient.posli(popisStavu.str().c_str());
     }
 

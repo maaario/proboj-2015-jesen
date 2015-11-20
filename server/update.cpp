@@ -73,10 +73,18 @@ Bod odpal2 (const FyzikalnyObjekt& A, const FyzikalnyObjekt& B) {
   }
   return vysl;
 }
-  
 
 
-void odsimuluj(const Mapa& mapa, Stav& stav, const vector<Prikaz>& akcie) {
+
+void odsimuluj(const Mapa& mapa, Stav& stav, vector<Prikaz>& akcie) {
+
+  // uprav akceleracie klientov, aby neakcelerovali viac ako LOD_MAX_ACC
+  for (Prikaz& prikaz : akcie) {
+    double pomer=prikaz.acc.dist()/LOD_MAX_ACC;
+    if (pomer>1) {
+      prikaz.acc=prikaz.acc*(1.0/pomer);
+    }
+  }
 
   // odsimuluj zrazky, a pridel objektom zrychlenie
   //
@@ -116,7 +124,6 @@ void odsimuluj(const Mapa& mapa, Stav& stav, const vector<Prikaz>& akcie) {
     objekty.push_back(&stav.hraci[i].obj);
     zrychl.push_back(akcie[i].acc);
   }
-
   for (int i=0; i<(int)objekty.size()-1; i++) {
     FyzikalnyObjekt* prvy=objekty[i];
     for (int j=i+1; j<(int)objekty.size(); j++) {
@@ -150,18 +157,40 @@ void odsimuluj(const Mapa& mapa, Stav& stav, const vector<Prikaz>& akcie) {
       double y= ptr->pozicia.y;
       
       switch (dx[smer]) {
-        case -1: x= -SENTINEL_POLOMER;
+        case -1: x= -SENTINEL_POLOMER; break;
         case 1: x=mapa.w+SENTINEL_POLOMER;
       }
       switch (dy[smer]) {
-        case -1: y= -SENTINEL_POLOMER;
+        case -1: y= -SENTINEL_POLOMER; break;
         case 1: y=mapa.h+SENTINEL_POLOMER;
       }
       FyzikalnyObjekt sentinel(-1,Bod(x,y),Bod(),SENTINEL_POLOMER,INF,SENTINEL_SILA,INF);
+      //log("vzdialenost od sentinelu %d je %f",smer,(sentinel.pozicia - ptr->pozicia).dist());
       Bod acc= odpal2(*ptr,sentinel);
       ptr->rychlost= ptr->rychlost+acc;
+      if (! ptr->neznicitelny() ) {
+        ptr->zivoty -= sentinel.sila*acc.dist();
+      }
     }
   }
+
+  // pohni objektami
+  //
+  for (FyzikalnyObjekt* ptr : objekty) {
+    ptr->pozicia= ptr->pozicia + ptr->rychlost;
+  }
+
+  //*
+  for (int i=0; i<(int)stav.hraci.size(); i++) {
+    if (!stav.hraci[i].zije()) {
+      log("hrac %d je mrtvy",i);
+      continue;
+    }
+    log("hrac %d na pozicii %f,%f sa hybe rychlostou %f,%f a ma %f zivotov",i,stav.hraci[i].obj.pozicia.x,
+      stav.hraci[i].obj.pozicia.y,stav.hraci[i].obj.rychlost.x,stav.hraci[i].obj.rychlost.y,
+      stav.hraci[i].obj.zivoty);
+  }
+  //*/
 
   stav.cas++;
 }
