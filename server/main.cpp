@@ -99,7 +99,7 @@ int main(int argc, char *argv[]) {
 
   vector<Prikaz> akcie;
 
-  while (true) {
+  while (stav.zivychHracov() > 1) {
 
     for (Klient &klient: klienti) {
       int kolkaty = akcie.size();

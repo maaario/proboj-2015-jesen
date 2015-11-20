@@ -5,6 +5,14 @@
 static int volne_id=0;
 static int volny_hrac=0;
 
+int zbran_na_proj (const int& typ_zbrane) {
+  switch (typ_zbrane) {
+    case ZBRAN_PUSKA: return BROK;
+    case ZBRAN_BOMBA: return BOMBA;
+  }
+  return -INF;
+}
+
 Bod::Bod() {
   this->x = 0;
   this->y = 0;
@@ -70,10 +78,10 @@ FyzikalnyObjekt::FyzikalnyObjekt (const int& t,const int& own, const Bod& poz,co
 
 FyzikalnyObjekt::FyzikalnyObjekt () {}
 
-bool FyzikalnyObjekt::zije () {
+bool FyzikalnyObjekt::zije () const {
   return zivoty > 0;
 }
-bool FyzikalnyObjekt::neznicitelny () {
+bool FyzikalnyObjekt::neznicitelny () const {
   return stit>0 || zivoty>INDESTRUCTIBLE;
 }
 
@@ -84,7 +92,7 @@ Vec::Vec (const Bod& poz,const int& t,const int& ammo) : typ(t), naboje(ammo)
 }
 Vec::Vec () {}
 
-bool Vec::zije () {
+bool Vec::zije () const {
   return obj.zije();
 }
 
@@ -97,7 +105,7 @@ Hrac::Hrac (const Bod& poz) : skore(0.0), zbrane(DRUHOV_ZBRANI,0), cooldown(0), 
 }
 Hrac::Hrac () {}
 
-bool Hrac::zije () {
+bool Hrac::zije () const {
   return obj.zije();
 }
 
@@ -112,3 +120,11 @@ Mapa::Mapa () : w(-1), h(-1) {}
 
 
 Stav::Stav () {}
+
+int Stav::zivychHracov () const {
+  int res=0;
+  for (const Hrac& hrac : hraci) {
+    res+= hrac.zije();
+  }
+  return res;
+}

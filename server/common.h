@@ -12,7 +12,8 @@ using namespace std;
 #define COOLDOWN 25
 #define BROKOV_NA_ZACIATKU 20
 
-#define STAV_TYPOV 5
+#define VSETKO_TYPOV 10
+#define STAV_TYPOV 6
 #define MAPA_TYPOV 3
 
 #define ASTEROID 0
@@ -20,11 +21,11 @@ using namespace std;
 #define HVIEZDA 2
 #define BOSS 3
 #define PROJEKTIL 4
-#define BROK 5
-#define BOMBA 6
-#define VEC 7
-#define LOD 8
-#define EXPLOZIA 9
+#define EXPLOZIA 5
+#define BROK 6
+#define BOMBA 7
+#define VEC 8
+#define LOD 9
 
 #define DRUHOV_ZBRANI 3
 #define DRUHOV_PROJ 2
@@ -42,7 +43,7 @@ using namespace std;
 #define LOD_KOLIZNY_LV 10
 #define LOD_SILA 10.0
 #define LOD_ZIVOTY 100.0
-#define LOD_MAX_ACC 0.001
+#define LOD_MAX_ACC 0.005
 
 // parametre sentinelu
 #define SENTINEL_POLOMER 100.0
@@ -70,6 +71,12 @@ const static double z_rychlost[DRUHOV_PROJ]= {0.5, 0.2};
 
 // parametre ostatnych zbrani
 #define LASER_SILA 1.0
+
+// parametre tykajuce sa bodovania
+const static double body_za_znic[VSETKO_TYPOV] =
+  {10.0, 500.0, INF, 5000.0, INF, INF, 0,0,0, 5000.0};
+
+int zbran_na_proj (const int& typ_zbrane) ;
 
 struct Bod {
   double x, y;
@@ -112,8 +119,8 @@ struct FyzikalnyObjekt {
 
   FyzikalnyObjekt () ;
 
-  bool zije () ;
-  bool neznicitelny () ;
+  bool zije () const ;
+  bool neznicitelny () const ;
 };
 
 struct Vec {
@@ -124,7 +131,7 @@ struct Vec {
   Vec (const Bod& poz,const int& t,const int& ammo) ;
   Vec () ;
 
-  bool zije () ;
+  bool zije () const ;
 };
 
 struct Hrac {
@@ -138,7 +145,7 @@ struct Hrac {
   Hrac (const Bod& poz) ;
   Hrac () ;
 
-  bool zije () ;
+  bool zije () const ;
 };
 
 struct Prikaz {
@@ -178,6 +185,8 @@ struct Stav {
   vector<Hrac> hraci;
 
   Stav () ;
+
+  int zivychHracov () const ;
 };
 
 #endif
