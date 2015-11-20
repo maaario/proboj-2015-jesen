@@ -8,6 +8,7 @@ using namespace std;
 #include "marshal.h"
 #include "common.h"
 
+
 // vid streamtest.cpp
 static int safepeek(istream& in) {
   if (in.eof()) return EOF;
@@ -30,7 +31,6 @@ bool skusNacitatSentinel(istream& in, int sentinel) {
   }
   else return false;   // ak sme nenasli sentinel, precitame len whitespace
 }
-
 
 template<> void uloz<int>(ostream& buf, const int& in) {
   buf << in << ' ';

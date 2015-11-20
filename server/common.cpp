@@ -1,6 +1,3 @@
-#include <vector>
-#include <string>
-#include <cstdio>
 #include <cmath>
 
 #include "common.h"
@@ -38,15 +35,23 @@ double Bod::dist() const {
   return sqrt(x*x + y*y);
 }
 
+double Bod::dist2() const {
+  return x*x + y*y;
+}
+
 Bod Bod::operator*(const Bod& B) const { // A a B zacinaju v rovn. bode, kolmica z B na A tvori 2. bod vysl. vektoru
   double skalarnySucin = x*B.x + y*B.y;
   double dlzka = skalarnySucin / B.dist();
   return B*(dlzka / B.dist());
 }
+
 double Bod::operator/(const Bod& B) const { // kolkonasobok B tvori so mnou pravouhly trojuholnik ?
   Bod temp = (*this)*B;
-  if (temp.x == 0.0) {
+  if (B.x == 0) {
     return temp.y/B.y;
+  }
+  if (B.y == 0) {
+    return 0.0;
   }
   return temp.x/B.x;
 }
@@ -84,10 +89,11 @@ bool Vec::zije () {
 }
 
 
-Hrac::Hrac (const Bod& poz) : skore(0.0), zbrane(DRUHOV_ZBRANI), cooldown(0), veci(DRUHOV_VECI)
+Hrac::Hrac (const Bod& poz) : skore(0.0), zbrane(DRUHOV_ZBRANI,0), cooldown(0), veci(DRUHOV_VECI,0)
 {
   obj=FyzikalnyObjekt(LOD,volny_hrac, poz, Bod(), LOD_POLOMER, LOD_KOLIZNY_LV, LOD_SILA, LOD_ZIVOTY);
   volny_hrac++;
+  zbrane[ZBRAN_PUSKA]= BROKOV_NA_ZACIATKU;
 }
 Hrac::Hrac () {}
 

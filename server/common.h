@@ -9,6 +9,8 @@ using namespace std;
 
 #define INF 1023456789ll
 #define INDESTRUCTIBLE 987654321ll
+#define COOLDOWN 25
+#define BROKOV_NA_ZACIATKU 20
 
 #define STAV_TYPOV 5
 #define MAPA_TYPOV 3
@@ -25,31 +27,49 @@ using namespace std;
 #define EXPLOZIA 9
 
 #define DRUHOV_ZBRANI 3
+#define DRUHOV_PROJ 2
 #define ZBRAN_PUSKA 0
-#define ZBRAN_LASER 1
-#define ZBRAN_BOMBA 2
+#define ZBRAN_BOMBA 1
+#define ZBRAN_LASER 2
 
 #define DRUHOV_VECI 3
 #define VEC_URYCHLOVAC 0
 #define VEC_STIT 1
 #define VEC_LEKARNICKA 2
 
-//parametre lode
+// parametre lode
 #define LOD_POLOMER 10.0
 #define LOD_KOLIZNY_LV 10
 #define LOD_SILA 10.0
 #define LOD_ZIVOTY 100.0
 #define LOD_MAX_ACC 0.001
 
-//parametre sentinelu
+// parametre sentinelu
 #define SENTINEL_POLOMER 100.0
 #define SENTINEL_SILA 10.0
 
-//parametre veci
+// parametre veci
 #define VEC_POLOMER 10.0
 #define VEC_KOLIZNY_LV 5
-#define VEC_SILA 10.0
+#define VEC_SILA 0.0
 #define VEC_ZIVOTY 100.0
+
+// parametre bossa
+#define BOSS_POLOMER 30.0
+#define BOSS_KOLIZNY_LV 100
+#define BOSS_SILA 1023456789ll
+#define BOSS_ZIVOTY 1023456789ll
+#define BOSS_MAX_ACC 0.0015
+
+// parametre projektilov
+const static double z_polomer[DRUHOV_PROJ]= {5.0, 6.0};
+const static int z_kolizny_lv[DRUHOV_PROJ]= {0, 0};
+const static double z_sila[DRUHOV_PROJ]= {10.0, 0.0};
+const static double z_zivoty[DRUHOV_PROJ]= {0.0001, 0.0001};
+const static double z_rychlost[DRUHOV_PROJ]= {0.5, 0.2};
+
+// parametre ostatnych zbrani
+#define LASER_SILA 1.0
 
 struct Bod {
   double x, y;
@@ -67,6 +87,7 @@ struct Bod {
   bool operator== (const Bod& iny) const ;
 
   double dist() const ;
+  double dist2() const ;
   Bod operator*(const Bod& B) const ;
   double operator/(const Bod& B) const ;
 };
@@ -121,9 +142,9 @@ struct Hrac {
 };
 
 struct Prikaz {
-  Bod acc;
+  Bod acc; // udava smer pohybu (je relativny)
 
-  Bod ciel;
+  Bod ciel; // udava poziciu ciela (je ABSOLUTNY)
   int pal;
 
   vector<int> pouzi;

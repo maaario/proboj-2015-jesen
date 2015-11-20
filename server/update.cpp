@@ -102,6 +102,33 @@ void odsimuluj(const Mapa& mapa, Stav& stav, vector<Prikaz>& akcie) {
     }
   }
 
+  // vytvor projektily
+  //
+  for (int i=0; i<(int)akcie.size(); i++) {
+    int pal= akcie[i].pal;
+    Bod ciel= akcie[i].ciel;
+    
+    if (pal==-1 || pal>=DRUHOV_PROJ) {
+      continue;
+    }
+    int owner= stav.hraci[i].obj.owner;
+    Bod poz= stav.hraci[i].obj.pozicia;
+    Bod rychl= stav.hraci[i].obj.rychlost;
+    double polomer= stav.hraci[i].obj.polomer;
+    
+    Bod smer= ciel-poz;
+    
+    double safedist= polomer+z_polomer[pal]+1.0;
+    Bod spawn= poz + smer*(safedist/smer.dist());
+    
+    smer=smer*(z_rychlost[pal]/smer.dist());
+    Bod p_rychl= rychl+smer;
+    FyzikalnyObjekt strela(PROJEKTIL+1+pal, owner,spawn, p_rychl, z_polomer[pal], z_kolizny_lv[pal], z_sila[pal], z_zivoty[pal]);
+    stav.obj[PROJEKTIL].push_back(strela);
+
+    stav.hraci[i].cooldown= COOLDOWN;
+  }
+
   // odsimuluj zrazky, a pridel objektom zrychlenie
   //
   vector<FyzikalnyObjekt*> objekty;
@@ -127,6 +154,8 @@ void odsimuluj(const Mapa& mapa, Stav& stav, vector<Prikaz>& akcie) {
         kam=kde;
       }
     }
+    kam= kam-obj.pozicia;
+    kam= kam*(BOSS_MAX_ACC/best);
     zrychl.push_back(kam);
   }
   for (Vec& vec : stav.veci) {
@@ -163,6 +192,40 @@ void odsimuluj(const Mapa& mapa, Stav& stav, vector<Prikaz>& akcie) {
     objekty[i]->rychlost = objekty[i]->rychlost + zrychl[i];
   }
 
+  // vypal neprojektilove zbrane (lasery)
+  //
+  for (int i=0; i<(int)akcie.size(); i++) {
+    int pal= akcie[i].pal;
+    Bod ciel= akcie[i].ciel;
+    
+    if (pal==-1 || pal<DRUHOV_PROJ) {
+      continue;
+    }
+    Bod poz= stav.hraci[i].obj.pozicia;
+    double polomer= stav.hraci[i].obj.polomer;
+
+    if (pal==ZBRAN_LASER) {
+      double safedist= polomer+1.0;
+      Bod smer= ciel-poz;
+      Bod spawn= poz + smer*(safedist/smer.dist());
+
+      for (FyzikalnyObjekt* ptr : objekty) {
+        Bod spojnica= ptr->pozicia-spawn;
+        Bod pata= spojnica*smer;
+        Bod kolmica= spojnica-pata;
+        if (pata/spojnica < 0) {
+          continue;
+        }
+        if (kolmica.dist() >= ptr->polomer) {
+          continue;
+        }
+        ptr->zivoty -= LASER_SILA;
+      }
+    }
+    // sem sa daju strknut nejake dalsie zbrane
+    //
+  }
+
   // udrz objekty v hracom poli
   //
   int dx[4]={0,1,0,-1};
@@ -196,7 +259,7 @@ void odsimuluj(const Mapa& mapa, Stav& stav, vector<Prikaz>& akcie) {
     ptr->pozicia= ptr->pozicia + ptr->rychlost;
   }
 
-  /*
+  //*
   for (int i=0; i<(int)stav.hraci.size(); i++) {
     if (!stav.hraci[i].zije()) {
       log("hrac %d (majitel lode je hrac %d) je mrtvy",stav.hraci[i].obj.id,stav.hraci[i].obj.owner);
@@ -211,7 +274,6 @@ void odsimuluj(const Mapa& mapa, Stav& stav, vector<Prikaz>& akcie) {
 
   stav.cas++;
 }
-
 
 
 
