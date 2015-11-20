@@ -14,6 +14,10 @@ Prikaz prikaz;
 // main() zavola tuto funkciu, ked chce vediet, aky prikaz chceme vykonat,
 // co tato funkcia rozhodne pomocou toho, ako nastavi prikaz;
 void zistiTah() {
+  Hrac ujo(Bod(0.0,0.0));
+  double cislo=ujo.skore;
+  fprintf(stderr, "hrac ma skore %f\n", cislo);
+  //fprintf(stderr, "hrac je %d a ma id %d\n",hrac.obj.owner,hrac.obj.id);
   prikaz.acc=Bod(0.7,-1.0);
 }
 

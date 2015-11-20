@@ -78,11 +78,27 @@ Bod odpal2 (const FyzikalnyObjekt& A, const FyzikalnyObjekt& B) {
 
 void odsimuluj(const Mapa& mapa, Stav& stav, vector<Prikaz>& akcie) {
 
-  // uprav akceleracie klientov, aby neakcelerovali viac ako LOD_MAX_ACC
-  for (Prikaz& prikaz : akcie) {
-    double pomer=prikaz.acc.dist()/LOD_MAX_ACC;
+  // uprav prikazy klientov:
+  // aby neakcelerovali viac ako LOD_MAX_ACC
+  // aby pouzivali/strielali len to, coho naboje maju
+  // 
+  for (int i=0; i<(int)akcie.size(); i++) {
+    double pomer=akcie[i].acc.dist()/LOD_MAX_ACC;
     if (pomer>1) {
-      prikaz.acc=prikaz.acc*(1.0/pomer);
+      akcie[i].acc=akcie[i].acc*(1.0/pomer);
+    }
+
+    int pal= akcie[i].pal;
+    if (pal<0 || pal>=DRUHOV_ZBRANI || stav.hraci[i].zbrane[pal]<=0 ||
+      stav.hraci[i].cooldown>0 || stav.hraci[i].obj.pozicia==akcie[i].ciel)
+    {
+      akcie[i].pal=-1;
+    }
+
+    for (int j=0; j<DRUHOV_VECI; j++) {
+      if (stav.hraci[i].veci[j]<=0) {
+        akcie[i].pouzi[j]=0;
+      }
     }
   }
 
@@ -164,7 +180,7 @@ void odsimuluj(const Mapa& mapa, Stav& stav, vector<Prikaz>& akcie) {
         case -1: y= -SENTINEL_POLOMER; break;
         case 1: y=mapa.h+SENTINEL_POLOMER;
       }
-      FyzikalnyObjekt sentinel(-1,Bod(x,y),Bod(),SENTINEL_POLOMER,INF,SENTINEL_SILA,INF);
+      FyzikalnyObjekt sentinel(-1,-1,Bod(x,y),Bod(),SENTINEL_POLOMER,INF,SENTINEL_SILA,INF);
       //log("vzdialenost od sentinelu %d je %f",smer,(sentinel.pozicia - ptr->pozicia).dist());
       Bod acc= odpal2(*ptr,sentinel);
       ptr->rychlost= ptr->rychlost+acc;
@@ -180,13 +196,14 @@ void odsimuluj(const Mapa& mapa, Stav& stav, vector<Prikaz>& akcie) {
     ptr->pozicia= ptr->pozicia + ptr->rychlost;
   }
 
-  //*
+  /*
   for (int i=0; i<(int)stav.hraci.size(); i++) {
     if (!stav.hraci[i].zije()) {
-      log("hrac %d je mrtvy",i);
+      log("hrac %d (majitel lode je hrac %d) je mrtvy",stav.hraci[i].obj.id,stav.hraci[i].obj.owner);
       continue;
     }
-    log("hrac %d na pozicii %f,%f sa hybe rychlostou %f,%f a ma %f zivotov",i,stav.hraci[i].obj.pozicia.x,
+    log("hrac %d (majitel lode je hrac %d) na pozicii %f,%f sa hybe rychlostou %f,%f a ma %f zivotov",
+      stav.hraci[i].obj.id,stav.hraci[i].obj.owner,stav.hraci[i].obj.pozicia.x,
       stav.hraci[i].obj.pozicia.y,stav.hraci[i].obj.rychlost.x,stav.hraci[i].obj.rychlost.y,
       stav.hraci[i].obj.zivoty);
   }

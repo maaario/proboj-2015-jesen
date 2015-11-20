@@ -3,14 +3,11 @@ CXXFLAGS = -O2 -MMD -MP -Wall -std=gnu++11
 
 all: server
 
-server: main.o klient.o marshal.o proces.o update.o util.o mapa.o
-	$(LINK.cpp) $^ $(LDLIBS) -o $@
-
-streamtest: streamtest.o
+server: main.o klient.o marshal.o common.o proces.o update.o util.o mapa.o
 	$(LINK.cpp) $^ $(LDLIBS) -o $@
 
 clean:
-	-rm -f *.d *.o server streamtest
+	-rm -f *.d *.o server
 
 -include *.d
 

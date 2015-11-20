@@ -5,9 +5,7 @@
 // vseobecne datove struktury
 
 #include <vector>
-#include <string>
-#include <cstdio>
-#include <cmath>
+using namespace std;
 
 #define INF 1023456789ll
 #define INDESTRUCTIBLE 987654321ll
@@ -24,6 +22,7 @@
 #define BOMBA 6
 #define VEC 7
 #define LOD 8
+#define EXPLOZIA 9
 
 #define DRUHOV_ZBRANI 3
 #define ZBRAN_PUSKA 0
@@ -55,48 +54,27 @@
 struct Bod {
   double x, y;
 
-  Bod() {
-    this->x = 0;
-    this->y = 0;
-  }
+  Bod() ;
 
-  Bod(double x, double y) {
-    this->x = x;
-    this->y = y;
-  }
+  Bod(double x, double y) ;
 
-  Bod operator+(const Bod &iny) const {
-    return Bod(x + iny.x, y + iny.y);
-  }
+  Bod operator+(const Bod &iny) const ;
 
-  Bod operator-(const Bod &iny) const {
-    return Bod(x - iny.x, y - iny.y);
-  }
+  Bod operator-(const Bod &iny) const ;
 
-  Bod operator*(const double &k) const {
-    return Bod(x * k, y * k);
-  }
+  Bod operator*(const double &k) const ;
 
-  double dist() const {
-    return sqrt(x*x + y*y);
-  }
+  bool operator== (const Bod& iny) const ;
 
-  Bod operator*(const Bod& B) const { // A a B zacinaju v rovn. bode, kolmica z B na A tvori 2. bod vysl. vektoru
-    double skalarnySucin = x*B.x + y*B.y;
-    double dlzka = skalarnySucin / B.dist();
-    return B*(dlzka / B.dist());
-  }
-  double operator/(const Bod& B) const { // kolkonasobok B tvori so mnou pravouhly trojuholnik ?
-    Bod temp = (*this)*B;
-    if (temp.x == 0.0) {
-      return temp.y/B.y;
-    }
-    return temp.x/B.x;
-  }
+  double dist() const ;
+  Bod operator*(const Bod& B) const ;
+  double operator/(const Bod& B) const ;
 };
 
 struct FyzikalnyObjekt {
   int typ;
+  int owner;
+  int id;
 
   Bod pozicia;
   Bod rychlost;
@@ -108,21 +86,13 @@ struct FyzikalnyObjekt {
   double zivoty;
   int stit;
 
-  FyzikalnyObjekt (const int& t, const Bod& poz,const Bod& v,const double& r,
-  const int& coll, const double& pow,const double& hp) :
-    typ(t),
-    pozicia(poz), rychlost(v), polomer(r),
-    koliznyLevel(coll),
-    sila(pow), zivoty(hp), stit(0) {}
+  FyzikalnyObjekt (const int& t,const int& own, const Bod& poz,const Bod& v,
+    const double& r, const int& coll, const double& pow,const double& hp) ;
 
-  FyzikalnyObjekt () {}
+  FyzikalnyObjekt () ;
 
-  bool zije () {
-    return zivoty > 0;
-  }
-  bool neznicitelny () {
-    return stit>0 || zivoty>INDESTRUCTIBLE;
-  }
+  bool zije () ;
+  bool neznicitelny () ;
 };
 
 struct Vec {
@@ -130,15 +100,10 @@ struct Vec {
   int typ;
   int naboje;
 
-  Vec (const Bod& poz,const int& t,const int& ammo) : typ(t), naboje(ammo)
-  {
-    obj= FyzikalnyObjekt(VEC, poz, Bod(), VEC_POLOMER, VEC_KOLIZNY_LV, VEC_SILA, VEC_ZIVOTY);
-  }
-  Vec () {}
+  Vec (const Bod& poz,const int& t,const int& ammo) ;
+  Vec () ;
 
-  bool zije () {
-    return obj.zije();
-  }
+  bool zije () ;
 };
 
 struct Hrac {
@@ -149,15 +114,10 @@ struct Hrac {
   int cooldown;
   vector<int> veci;
 
-  Hrac (const Bod& poz) : skore(0.0), zbrane(DRUHOV_ZBRANI), cooldown(0), veci(DRUHOV_VECI)
-  {
-    obj=FyzikalnyObjekt(LOD, poz, Bod(), LOD_POLOMER, LOD_KOLIZNY_LV, LOD_SILA, LOD_ZIVOTY);
-  }
-  Hrac () {}
+  Hrac (const Bod& poz) ;
+  Hrac () ;
 
-  bool zije () {
-    return obj.zije();
-  }
+  bool zije () ;
 };
 
 struct Prikaz {
@@ -168,7 +128,7 @@ struct Prikaz {
 
   vector<int> pouzi;
 
-  Prikaz () : acc(Bod()), ciel(Bod()), pal(-1), pouzi(DRUHOV_VECI) {}
+  Prikaz () ;
 };
 
 struct Mapa { //TODO: popis spawnovania asteroidov
@@ -178,10 +138,9 @@ struct Mapa { //TODO: popis spawnovania asteroidov
   vector<FyzikalnyObjekt> objekty;
   vector<Vec> veci;
 
-  Mapa (const double& sirka,const double& vyska) :
-    w(sirka), h(vyska) {}
+  Mapa (const double& sirka,const double& vyska) ;
 
-  Mapa () : w(-1), h(-1) {}
+  Mapa () ;
 };
 
 struct Stav {
@@ -197,7 +156,7 @@ struct Stav {
   vector<Vec> veci;
   vector<Hrac> hraci;
 
-  Stav () {}
+  Stav () ;
 };
 
 #endif
@@ -212,6 +171,8 @@ end();
 
 reflection(FyzikalnyObjekt);
   member(typ);
+  member(owner);
+  member(id);
   member(pozicia);
   member(rychlost);
   member(polomer);

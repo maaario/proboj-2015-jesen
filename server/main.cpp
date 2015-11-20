@@ -20,6 +20,9 @@ using namespace std;
 
 vector<Klient> klienti;
 
+int volne_id = 0;
+int volny_hrac = 0;
+
 // tato trapna funkcia existuje len kvoli inicializujSignaly()
 void zabiKlientov() {
   for (Klient &klient: klienti) {

@@ -9,7 +9,7 @@ CLEAN = *.d *.o observer
 
 all: observer
 
-observer: main.o logic.o server_marshal.o server_util.o
+observer: main.o logic.o server_common.o server_marshal.o server_util.o
 	$(LINK.cpp) $^ $(LDLIBS) -o $@
 
 server_%.o: $(SERVERDIR)/%.cpp
