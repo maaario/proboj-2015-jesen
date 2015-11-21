@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
 
   string zaznamovyAdresar(argv[1]);
   Hra hra;
-  hra.nacitajSubor(zaznamovyAdresar + "/zaznam");
+  hra.nacitajSubor(zaznamovyAdresar + "/observation");
 
   SDL_Init(SDL_INIT_VIDEO);
   atexit(SDL_Quit);
@@ -52,6 +52,10 @@ int main(int argc, char *argv[]) {
         int key = event.key.keysym.sym;
 
         switch (key) {
+          case SDLK_RETURN: {
+            cas = 0;
+          } break;
+
           case SDLK_p: {
             pauza = !pauza;
           } break;

@@ -9,13 +9,18 @@
 
 struct KruhovyObjekt {
   int typ;
+  int majitel;
 
-  Bod pozicia;
+  Bod zaciatok;
+  Bod koniec;
   double polomer;
 
-  KruhovyObjekt(int typ, Bod pozicia, double polomer) {
+  int magia;
+
+  KruhovyObjekt(int typ, int majitel, Bod zaciatok, Bod koniec, double polomer) {
     this->typ = typ;
-    this->pozicia = pozicia;
+    this->zaciatok = zaciatok;
+    this->koniec = koniec;
     this->polomer = polomer;
   }
 };
