@@ -5,7 +5,7 @@
 static int volne_id=0;
 static int volny_hrac=0;
 
-int zbranNaVystrel (const int& zbran) {
+int zbranNaVystrel (int zbran) {
   switch (zbran) {
     case VEC_PUSKA: return VYSTREL_PUSKA;
     case VEC_BOMBA: return VYSTREL_BOMBA;
@@ -14,7 +14,7 @@ int zbranNaVystrel (const int& zbran) {
   return -INF;
 }
 
-int vystrelNaProj (const int& vystrel) {
+int vystrelNaProj (int vystrel) {
   switch (vystrel) {
     case VYSTREL_PUSKA: return BROK;
     case VYSTREL_BOMBA: return BOMBA;
@@ -22,7 +22,7 @@ int vystrelNaProj (const int& vystrel) {
   return -INF;
 }
 
-int vecNaPouzi (const int& vec) {
+int vecNaPouzi (int vec) {
   switch (vec) {
     case VEC_URYCHLOVAC: return POUZI_URYCHLOVAC;
     case VEC_STIT: return POUZI_STIT;
@@ -41,19 +41,19 @@ Bod::Bod(double x, double y) {
   this->y = y;
 }
 
-Bod Bod::operator+(const Bod &iny) const {
+Bod Bod::operator+(Bod iny) const {
   return Bod(x + iny.x, y + iny.y);
 }
 
-Bod Bod::operator-(const Bod &iny) const {
+Bod Bod::operator-(Bod iny) const {
   return Bod(x - iny.x, y - iny.y);
 }
 
-Bod Bod::operator*(const double &k) const {
+Bod Bod::operator*(double k) const {
   return Bod(x * k, y * k);
 }
 
-bool Bod::operator== (const Bod& iny) const {
+bool Bod::operator== (Bod iny) const {
   return x==iny.x && y==iny.y;
 }
 
@@ -65,13 +65,13 @@ double Bod::dist2() const {
   return x*x + y*y;
 }
 
-Bod Bod::operator*(const Bod& B) const { // A a B zacinaju v rovn. bode, kolmica z B na A tvori 2. bod vysl. vektoru
+Bod Bod::operator*(Bod B) const { // A a B zacinaju v rovn. bode, kolmica z B na A tvori 2. bod vysl. vektoru
   double skalarnySucin = x*B.x + y*B.y;
   double dlzka = skalarnySucin / B.dist();
   return B*(dlzka / B.dist());
 }
 
-double Bod::operator/(const Bod& B) const { // kolkonasobok B tvori so mnou pravouhly trojuholnik ?
+double Bod::operator/(Bod B) const { // kolkonasobok B tvori so mnou pravouhly trojuholnik ?
   Bod temp = (*this)*B;
   if (B.x == 0) {
     return temp.y/B.y;
@@ -83,8 +83,8 @@ double Bod::operator/(const Bod& B) const { // kolkonasobok B tvori so mnou prav
 }
 
 
-FyzikalnyObjekt::FyzikalnyObjekt (const int& t,const int& own, const Bod& poz,const Bod& v,
-  const double& r, const int& coll, const double& pow,const double& hp) :
+FyzikalnyObjekt::FyzikalnyObjekt (int t,int own, Bod poz,Bod v,
+  double r, int coll, double pow,double hp) :
   typ(t), owner(own),
   pozicia(poz), rychlost(v), polomer(r),
   koliznyLevel(coll),
@@ -108,7 +108,7 @@ double FyzikalnyObjekt::obsah () const {
 
 Vybuch::Vybuch () {}
 
-Vybuch::Vybuch (const int& own,const Bod& kde,const double& r,const double& dmg,const int& f) :
+Vybuch::Vybuch (int own,Bod kde,double r,double dmg,int f) :
   owner(own), pozicia(kde), polomer(r), sila(dmg), faza(f)
 {
   id=volne_id;
@@ -116,7 +116,7 @@ Vybuch::Vybuch (const int& own,const Bod& kde,const double& r,const double& dmg,
 }
 
 
-Vec::Vec (const Bod& poz,const int& t,const int& ammo) : typ(t), naboje(ammo)
+Vec::Vec (Bod poz,int t,int ammo) : typ(t), naboje(ammo)
 {
   obj= FyzikalnyObjekt(t,-1, poz, Bod(), VEC_POLOMER, VEC_KOLIZNY_LV, VEC_SILA, VEC_ZIVOTY);
 }
@@ -127,7 +127,7 @@ bool Vec::zije () const {
 }
 
 
-Hrac::Hrac (const Bod& poz) : skore(0.0), zbrane(DRUHOV_ZBRANI,0), cooldown(0), veci(DRUHOV_VECI,0)
+Hrac::Hrac (Bod poz) : skore(0.0), zbrane(DRUHOV_ZBRANI,0), cooldown(0), veci(DRUHOV_VECI,0)
 {
   obj=FyzikalnyObjekt(LOD,volny_hrac, poz, Bod(), LOD_POLOMER, LOD_KOLIZNY_LV, LOD_SILA, LOD_ZIVOTY);
   volny_hrac++;
@@ -144,7 +144,7 @@ bool Hrac::zije () const {
 Prikaz::Prikaz () : acc(Bod()), ciel(Bod()), pal(-1), pouzi(DRUHOV_VECI) {}
 
 
-Mapa::Mapa (const double& sirka,const double& vyska) :
+Mapa::Mapa (double sirka,double vyska) :
   w(sirka), h(vyska) {}
   
 Mapa::Mapa () : w(-1), h(-1) {}

@@ -7,11 +7,11 @@
 
 #include "common.h"
 
-void zapniObservation(std::ostream* observation, const int& ft);
+void zapniObservation(std::ostream* observation, int ft);
 
 void vypis () ;
 
-void odsimuluj(const Mapa& mapa, Stav& stav, vector<Prikaz>& akcie);
+void odsimuluj(Stav& stav, vector<Prikaz>& akcie,const Mapa& mapa);
 
 bool pociatocnyStav(Mapa& mapa, Stav& stav, int pocKlientov);
 

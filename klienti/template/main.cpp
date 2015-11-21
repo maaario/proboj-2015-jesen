@@ -23,8 +23,22 @@ void zistiTah() {
   smer= smer+nahodny;
   
   prikaz.acc=smer;
-  prikaz.ciel= stav.hraci[1].obj.pozicia;
-  prikaz.pal= -1;
+  double best= INF;
+  int kto= -1;
+  for (int i=1; i<(int)stav.hraci.size(); i++) {
+    if (!stav.hraci[i].zije()) {
+      continue;
+    }
+    Bod spojnica= stav.hraci[i].obj.pozicia-stav.hraci[0].obj.pozicia;
+    if (spojnica.dist()<best) {
+      best=spojnica.dist();
+      kto=i;
+    }
+  }
+  if (kto!=-1) {
+    prikaz.ciel= stav.hraci[kto].obj.pozicia;
+  }
+  prikaz.pal= VYSTREL_PUSKA;
 }
 
 int main() {

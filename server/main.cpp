@@ -152,7 +152,7 @@ int main(int argc, char *argv[]) {
       stav.hraci[0]=temp;
     }
 
-    odsimuluj(mapa,stav,akcie);
+    odsimuluj(stav,akcie,mapa);
 
     //cleanup
     akcie.clear();

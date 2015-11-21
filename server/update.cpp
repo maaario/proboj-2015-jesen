@@ -21,7 +21,7 @@ static int volne_zap_id = -INF;
 const static int kNormTypy[NORM_TYPOV] =
   {ASTEROID,PLANETA,HVIEZDA,PROJ_BEGIN};
 
-#define SENTINEL_POLOMER 1000.0
+#define SENTINEL_POLOMER 987654.0
 
 #define OBSERVE_VYBUCH 13
 #define OBSERVE_LASER 14
@@ -30,13 +30,13 @@ const static int kNormTypy[NORM_TYPOV] =
 
 static ostream* g_observation;
 static int frame_t;
-void zapniObservation(ostream* observation, const int& ft) {
+void zapniObservation(ostream* observation, int ft) {
   g_observation = observation;
   frame_t=ft;
 }
 
 
-double rand_float (const double& d) {
+double rand_float (double d) {
   return (double)(rand()%int(1.0 + d*PRESNOST))/(double)PRESNOST;
 }
 
@@ -100,7 +100,7 @@ Bod odpal2 (const FyzikalnyObjekt& A, const FyzikalnyObjekt& B) {
 
 
 
-Vec vytvorVec(const Bod& poz,const Bod& rychl) {
+Vec vytvorVec(Bod poz,Bod rychl) {
   int typ= rand()%(DRUHOV_ZBRANI+DRUHOV_VECI);
   int nabojov= int(kV_nabojov[typ]/2);
   if (nabojov<1) {
@@ -112,16 +112,17 @@ Vec vytvorVec(const Bod& poz,const Bod& rychl) {
   return res;
 }
 
-FyzikalnyObjekt vytvorAst(const Bod& poz,const Bod& rychl, const double& r) {
+FyzikalnyObjekt vytvorAst(Bod poz,Bod rychl, double r) {
   double zivoty= AST_ZIV_RATE*r;
   FyzikalnyObjekt res(ASTEROID,-1, poz,rychl,r, AST_KOLIZNY_LV, AST_SILA, zivoty);
   return res;
 }
 
 void rozpad(const FyzikalnyObjekt& obj, vector<FyzikalnyObjekt>& vznikleObjekty, vector<Vec>& vznikleVeci) {
-  if (!(obj.typ==ASTEROID || obj.typ==PLANETA)) {
+  if (obj.typ!=ASTEROID && obj.typ!=PLANETA) {
     return;
   }
+  
   if (obj.polomer/2 < AST_MIN_R) {
     if (rand_float(1.0) < obj.obsah()*AST_DROP_RATE) {
       vznikleVeci.push_back(vytvorVec(obj.pozicia,obj.rychlost));
@@ -190,7 +191,7 @@ struct obraz {
   int note;
 
   obraz () {}
-  obraz (const int& t,const int& own,const Bod& poz,const double& r,const int& nt) :
+  obraz (int t,int own, Bod poz, double r, int nt) :
     typ(t), owner(own), zac(poz), kon(poz), polomer(r), note(nt) {}
   obraz (const FyzikalnyObjekt& obj) {
     typ=obj.typ;
@@ -214,7 +215,7 @@ struct obraz {
     polomer=bum.polomer;
     note=bum.faza;
   }
-  obraz (const int& own, const Bod& start, const Bod& tgt) {
+  obraz (int own,Bod start,Bod tgt) {
     typ= OBSERVE_LASER;
     owner= own;
     zac= start;
@@ -224,7 +225,7 @@ struct obraz {
   }
 };
 
-int konvertDoStavu (const int& typ) {
+int konvertDoStavu (int typ) {
   switch (typ) {
     case ASTEROID: return ASTEROID;
     case PLANETA: return PLANETA;
@@ -296,14 +297,9 @@ void vypis() {
   vidim.clear();
 }
 
-void odsimuluj(const Mapa& mapa, Stav& stav, vector<Prikaz>& akcie) {
-  // axiomy:
-  // kazdy objekt musi byt zivy aspon 1 jednotku casu
-  // vznikajuce objekty ovplyvnuju a su ovplyvnovane az nasledujucim stavom
-  // laser nie je vznikajuci objekt, ten ovplyvnuje aktualny stav
-
+void opravPrikazy(Stav& stav,vector<Prikaz>& akcie) {
   // uprav prikazy klientov:
-  // aby neakcelerovali viac ako LOD_MAX_ACC
+  // aby neakcelerovali viac ako LOD_MAX_ACC (nasledne hned upravim rychlost hracov)
   // aby pouzivali/strielali len to, coho naboje maju
   //
   log("opavujem prikazy klientov");
@@ -315,6 +311,7 @@ void odsimuluj(const Mapa& mapa, Stav& stav, vector<Prikaz>& akcie) {
     if (pomer>1) {
       akcie[i].acc=akcie[i].acc*(1.0/pomer);
     }
+    stav.hraci[i].obj.rychlost= stav.hraci[i].obj.rychlost+akcie[i].acc;
 
     int pal= akcie[i].pal;
     if (pal<0 || pal>=DRUHOV_ZBRANI || stav.hraci[i].zbrane[pal]<=0 ||
@@ -329,62 +326,94 @@ void odsimuluj(const Mapa& mapa, Stav& stav, vector<Prikaz>& akcie) {
       }
     }
   }
+}
 
-  // urob zoznam vacsiny objektov
+void udrz(FyzikalnyObjekt& obj, const Mapa& mapa) {
+  // udrz objekty v hracom poli
+  // aby platilo: kazdy objekt mimo mapy sa nevie hybat dalej od mapy
   //
-  log("zoznamujem objekty");
-  vector<FyzikalnyObjekt*> objekty;
-  vector<Bod> zrychl;
-  for (int t=0; t<NORM_TYPOV; t++) {
-    int typ = kNormTypy[t];
-    for (FyzikalnyObjekt& obj : stav.obj[typ]) {
-      objekty.push_back(&obj);
-      zrychl.push_back(Bod());
+  int dx[4]={0,1,0,-1};
+  int dy[4]={1,0,-1,0};
+  for (int smer=0; smer<4; smer++) {
+    double x= obj.pozicia.x;
+    double y= obj.pozicia.y;
+    switch (dx[smer]) {
+      case -1: x= -SENTINEL_POLOMER; break;
+      case 1: x=mapa.w+SENTINEL_POLOMER;
+    }
+    switch (dy[smer]) {
+      case -1: y= -SENTINEL_POLOMER; break;
+      case 1: y=mapa.h+SENTINEL_POLOMER;
+    }
+    FyzikalnyObjekt sentinel(-1,-1,Bod(x,y),Bod(),SENTINEL_POLOMER,INF,SENTINEL_SILA,INF);
+    Bod acc= odpal2(obj,sentinel);
+    obj.rychlost= obj.rychlost+acc;
+    if (! obj.neznicitelny() ) {
+      obj.zivoty -= sentinel.sila*acc.dist();
     }
   }
-  for (FyzikalnyObjekt& obj : stav.obj[BOSS]) {
-    // so far, bossovia su indestructible
-    // aby sa mohli hybat hlupo (burat do hviezd)
-    //
-    objekty.push_back(&obj);
-    Bod kam(obj.pozicia);
-    double best= INF;
-    for (int i=0; i<(int)stav.hraci.size(); i++) {
-      Bod kde= stav.hraci[i].obj.pozicia;
-      double vzdial= (kde-obj.pozicia).dist();
-      if (vzdial < best) {
-        best = vzdial;
-        kam=kde;
-      }
+}
+
+void pohniBossom(FyzikalnyObjekt& obj, Stav& stav) {
+  // so far, bossovia su indestructible
+  // aby sa mohli hybat hlupo (burat do hviezd)
+  //
+  log("bossujem");
+  Bod kam(obj.pozicia);
+  double best= INF;
+  for (int i=0; i<(int)stav.hraci.size(); i++) {
+    Bod kde= stav.hraci[i].obj.pozicia;
+    double vzdial= (kde-obj.pozicia).dist();
+    if (vzdial < best) {
+      best = vzdial;
+      kam=kde;
     }
-    kam= kam-obj.pozicia;
-    kam= kam*(BOSS_MAX_ACC/best);
-    zrychl.push_back(kam);
+  }
+  kam= kam-obj.pozicia;
+  kam= kam*(BOSS_MAX_ACC/best);
+  obj.rychlost= obj.rychlost+kam;
+}
+
+void zoznamObjekty(Stav& stav, vector<FyzikalnyObjekt*>& objekty) {
+  for (int t=0; t<STAV_TYPOV; t++) {
+    for (FyzikalnyObjekt& obj : stav.obj[t]) {
+      objekty.push_back(&obj);
+    }
   }
   for (Vec& vec : stav.veci) {
     objekty.push_back(&vec.obj);
-    zrychl.push_back(Bod());
   }
   for (int i=0; i<(int)stav.hraci.size(); i++) {
     if (!stav.hraci[i].zije()) {
       continue;
     }
     objekty.push_back(&stav.hraci[i].obj);
-    zrychl.push_back(akcie[i].acc);
   }
+}
 
+void okamzityEfekt(Stav& stav,const vector<Prikaz>& akcie,const Mapa& mapa) {
+  Stav old=stav;
+  
+  vector<FyzikalnyObjekt*> objekty;
+  zoznamObjekty(stav,objekty);
+  vector<FyzikalnyObjekt*> stare;
+  zoznamObjekty(old,stare);
+
+  // pohni bossmi
+  //
+  for (FyzikalnyObjekt& boss : stav.obj[konvertDoStavu(BOSS)]) {
+    pohniBossom(boss,stav);
+  }
+  
   // zrazanie objektov
   //
   log("zrazam objekty");
-  for (int i=0; i<(int)objekty.size(); i++) {
-    FyzikalnyObjekt* prvy=objekty[i];
-    vector<double> skore(akcie.size(),0.0);
-    for (int j=0; j<(int)objekty.size(); j++) {
-      if (i==j) {
+  for (FyzikalnyObjekt* prvy : objekty) {
+    vector<double> skore(stav.hraci.size(),0.0);
+    for (FyzikalnyObjekt* druhy : stare) {
+      if (prvy->id == druhy->id) {
         continue;
       }
-      FyzikalnyObjekt* druhy=objekty[j];
-      
       Bod acc = odpal2(*prvy, *druhy);
       Bod antiacc = odpal2(*druhy, *prvy);
       double silaZrazky = acc.dist()+antiacc.dist();
@@ -396,7 +425,7 @@ void odsimuluj(const Mapa& mapa, Stav& stav, vector<Prikaz>& akcie) {
           skore[druhy->owner]+= damage;
         }
       }
-      zrychl[i]= zrychl[i]+acc;
+      prvy->rychlost= prvy->rychlost + acc;
     }
 
     // hori? (je vo vybuchu?)
@@ -412,8 +441,52 @@ void odsimuluj(const Mapa& mapa, Stav& stav, vector<Prikaz>& akcie) {
       }
     }
 
+    udrz(*prvy,mapa);
+
+    // ma na mna vplyv nejaka speci zbran?
+    //
+    {
+      for (int i=0; i<(int)akcie.size(); i++) {
+        if (!stav.hraci[i].zije()) {
+          continue;
+        }
+        int pal= akcie[i].pal;
+        Bod ciel= akcie[i].ciel;
+        
+        if (pal==-1) {
+          continue;
+        }
+        int owner= stav.hraci[i].obj.owner;
+        Bod poz= stav.hraci[i].obj.pozicia;
+        Bod smer= ciel-poz;
+        double safedist= stav.hraci[i].obj.polomer + 1.0;
+        Bod spawn= poz + smer*(safedist/smer.dist());
+
+        if (pal==VYSTREL_LASER) {
+          // laser striela okamzite, prechadza cez vsetko
+          // a je relativne slaby
+          //
+          Bod spojnica= prvy->pozicia-spawn;
+          Bod pata= spojnica*smer;
+          Bod kolmica= spojnica-pata;
+          if (pata/spojnica < 0) {
+            continue;
+          }
+          if (kolmica.dist() >= prvy->polomer) {
+            continue;
+          }
+          prvy->zivoty -= LASER_SILA;
+          skore[owner] += LASER_SILA;
+        }
+      }
+    }
+
     // odmen ostatnych
+    //
     for (int j=0; j<(int)skore.size(); j++) {
+      if (skore[j]<=0.0) {
+        continue;
+      }
       if (!prvy->zije()) {
         skore[j]+= kBodyZnic[prvy->typ];
       }
@@ -423,112 +496,54 @@ void odsimuluj(const Mapa& mapa, Stav& stav, vector<Prikaz>& akcie) {
       stav.hraci[j].skore+= skore[j];
     }
   }
-  for (int i=0; i<(int)objekty.size(); i++) {
-    objekty[i]->rychlost = objekty[i]->rychlost + zrychl[i];
-  }
+}
 
-  // vypal zo zbrani
-  //
+void vypalZoZbrani(Stav& stav,const vector<Prikaz>& akcie,const Mapa& mapa) {
   log("palim zo zbrani");
-  {
-    vector<FyzikalnyObjekt*> vznikleObjekty;
-    for (int i=0; i<(int)akcie.size(); i++) {
-      if (!stav.hraci[i].zije()) {
-        continue;
-      }
-      int pal= akcie[i].pal;
-      Bod ciel= akcie[i].ciel;
-      
-      if (pal==-1) {
-        continue;
-      }
-      int owner= stav.hraci[i].obj.owner;
-      Bod poz= stav.hraci[i].obj.pozicia;
-      Bod rychl= stav.hraci[i].obj.rychlost;
-      double polomer= stav.hraci[i].obj.polomer;
-      
-      Bod smer= ciel-poz;
-      int proj= (vystrelNaProj(pal)!=-INF);
-      double safedist= polomer+1.0 + (proj!=-INF ? kZ_polomer[pal] : 0.0);
-      Bod spawn= poz + smer*(safedist/smer.dist());
-
-      if (proj!=-INF) {
-        smer=smer*(kZ_rychlost[pal]/smer.dist());
-        Bod p_rychl= rychl+smer;
-        FyzikalnyObjekt strela( proj, owner,spawn, p_rychl, kZ_polomer[pal], kZ_koliznyLv[pal], kZ_sila[pal], kZ_zivoty[pal]);
-        stav.obj[PROJ_BEGIN].push_back(strela);
-        vznikleObjekty.push_back(&stav.obj[PROJ_BEGIN].back());
-
-        stav.hraci[i].cooldown= COOLDOWN;
-      }
-      else {
-        if (pal==VYSTREL_LASER) {
-          // laser striela okamzite, prechadza cez vsetko
-          // a je relativne slaby
-          //
-          for (FyzikalnyObjekt* ptr : objekty) {
-            Bod spojnica= ptr->pozicia-spawn;
-            Bod pata= spojnica*smer;
-            Bod kolmica= spojnica-pata;
-            if (pata/spojnica < 0) {
-              continue;
-            }
-            if (kolmica.dist() >= ptr->polomer) {
-              continue;
-            }
-            ptr->zivoty -= LASER_SILA;
-          }
-          
-          // observujem  |  |
-          //             v  v
-          obraz laser(stav.hraci[i].obj.owner, spawn,ciel);
-          vidim[volne_zap_id]= laser;
-          volne_zap_id++;
-        }
-        // sem sa daju nastrkat dalsie speci zbrane
-        //
-      }
+  for (int i=0; i<(int)akcie.size(); i++) {
+    if (!stav.hraci[i].zije()) {
+      continue;
     }
-    // medzi objekty pridaj tie, co prave vznikli
-    while (!vznikleObjekty.empty()) {
-      objekty.push_back(vznikleObjekty.back());
-      vznikleObjekty.pop_back();
+    int pal= akcie[i].pal;
+    Bod ciel= akcie[i].ciel;
+    
+    if (pal==-1) {
+      continue;
     }
-    // end of scope of vznikleObjekty
-  }
+    int owner= stav.hraci[i].obj.owner;
+    Bod poz= stav.hraci[i].obj.pozicia;
+    Bod rychl= stav.hraci[i].obj.rychlost;
+    double polomer= stav.hraci[i].obj.polomer;
+    
+    Bod smer= ciel-poz;
+    int proj= vystrelNaProj(pal);
+    double safedist= polomer+1.0 + (proj!=-INF ? kZ_polomer[pal] : 0.0);
+    Bod spawn= poz + smer*(safedist/smer.dist());
 
-
-  // udrz objekty v hracom poli
-  //
-  log("udrzujem objekty v poli");
-  int dx[4]={0,1,0,-1};
-  int dy[4]={1,0,-1,0};
-  for (FyzikalnyObjekt* ptr : objekty) {
-    for (int smer=0; smer<4; smer++) {
-      double x= ptr->pozicia.x;
-      double y= ptr->pozicia.y;
-      
-      switch (dx[smer]) {
-        case -1: x= -SENTINEL_POLOMER; break;
-        case 1: x=mapa.w+SENTINEL_POLOMER;
-      }
-      switch (dy[smer]) {
-        case -1: y= -SENTINEL_POLOMER; break;
-        case 1: y=mapa.h+SENTINEL_POLOMER;
-      }
-      FyzikalnyObjekt sentinel(-1,-1,Bod(x,y),Bod(),SENTINEL_POLOMER,INF,SENTINEL_SILA,INF);
-      //log("vzdialenost od sentinelu %d je %f",smer,(sentinel.pozicia - ptr->pozicia).dist());
-      Bod acc= odpal2(*ptr,sentinel);
-      ptr->rychlost= ptr->rychlost+acc;
-      if (! ptr->neznicitelny() ) {
-        ptr->zivoty -= sentinel.sila*acc.dist();
+    if (proj!=-INF) {
+      smer=smer*(kZ_rychlost[pal]/smer.dist());
+      Bod p_rychl= rychl+smer;
+      FyzikalnyObjekt strela(proj,owner, spawn,p_rychl, kZ_polomer[pal], kZ_koliznyLv[pal], kZ_sila[pal], kZ_zivoty[pal]);
+      udrz(strela,mapa);
+      stav.obj[PROJ_BEGIN].push_back(strela);
+      stav.hraci[i].cooldown= COOLDOWN;
+    }
+    else {
+      if (pal==VYSTREL_LASER) {
+        // observujem  |  |
+        //             v  v
+        obraz laser(stav.hraci[i].obj.owner, spawn,ciel);
+        vidim[volne_zap_id]= laser;
+        volne_zap_id++;
       }
     }
   }
+}
 
+void ziskajPickupy(Stav& stav) {
   // ziskaj pickupy (veci)
   //
-  log("pickupy vec");
+  log("pickupy");
   for (Hrac& hrac : stav.hraci) {
     if (!hrac.zije()) {
       continue;
@@ -548,14 +563,18 @@ void odsimuluj(const Mapa& mapa, Stav& stav, vector<Prikaz>& akcie) {
       }
     }
   }
+}
 
-  // pohni objektami
-  //
+void pohniObjektami(Stav& stav) {
   log("hybem objektami");
+  vector<FyzikalnyObjekt*> objekty;
+  zoznamObjekty(stav,objekty);
   for (FyzikalnyObjekt* ptr : objekty) {
     ptr->pozicia= ptr->pozicia + ptr->rychlost;
   }
+}
 
+void endStep(Stav& stav) {
   // end step
   //
   log("cooldown");
@@ -576,52 +595,46 @@ void odsimuluj(const Mapa& mapa, Stav& stav, vector<Prikaz>& akcie) {
     }
   }
   stav.cas++;
+}
 
-  // este pred pochovanim zaznamenaj, lebo umierajuce objekty mozu mat kul animaciu
-  log("zaznamenavam");
-  zaznamuj(stav);
-
+void pohrebnaSluzba(Stav& stav) {
   // cleanup step -- pochovaj mrtve
   // asteroidy, planety, hviezdy, bossov, PROJ_BEGINy, veci
   //
   log("pochovavam");
-  {
-    vector<FyzikalnyObjekt> vznikleObjekty;
-    vector<Vec> vznikleVeci;
-    for (int t=0; t<STAV_TYPOV; t++) {
-      for (int i=(int)stav.obj[t].size()-1; i>=0; i--) {
-        if (stav.obj[t][i].zije()) {
-          continue;
-        }
-        if (stav.obj[t][i].typ == BOMBA) {
-          Vybuch bum(stav.obj[t][i].owner, stav.obj[t][i].pozicia, BUM_POLOMER, BUM_SILA, BUM_TRVANIE);
-          stav.vybuchy.push_back(bum);
-        }
-        rozpad(stav.obj[t][i], vznikleObjekty, vznikleVeci);
-        stav.obj[t][i]= stav.obj[t].back();
-        stav.obj[t].pop_back();
-      }
-    }
-    for (int i=(int)stav.veci.size()-1; i>=0; i--) {
-      if (stav.veci[i].zije()) {
+  vector<FyzikalnyObjekt> vznikleObjekty;
+  vector<Vec> vznikleVeci;
+  for (int t=0; t<STAV_TYPOV; t++) {
+    for (int i=(int)stav.obj[t].size()-1; i>=0; i--) {
+      if (stav.obj[t][i].zije()) {
         continue;
       }
-      stav.veci[i]= stav.veci.back();
-      stav.veci.pop_back();
+      if (stav.obj[t][i].typ == BOMBA) {
+        Vybuch bum(stav.obj[t][i].owner, stav.obj[t][i].pozicia, BUM_POLOMER, BUM_SILA, BUM_TRVANIE);
+        stav.vybuchy.push_back(bum);
+      }
+      rozpad(stav.obj[t][i], vznikleObjekty, vznikleVeci);
+      stav.obj[t][i]= stav.obj[t].back();
+      stav.obj[t].pop_back();
     }
-    for (FyzikalnyObjekt& obj : vznikleObjekty) {
-      int t= konvertDoStavu(obj.typ);
-      stav.obj[t].push_back(obj);
-    }
-    for (Vec& item : vznikleVeci) {
-      stav.veci.push_back(item);
-    }
-    // end of scope of vznikle objekty & vznikle veci
   }
+  for (int i=(int)stav.veci.size()-1; i>=0; i--) {
+    if (stav.veci[i].zije()) {
+      continue;
+    }
+    stav.veci[i]= stav.veci.back();
+    stav.veci.pop_back();
+  }
+  for (FyzikalnyObjekt& obj : vznikleObjekty) {
+    int t= konvertDoStavu(obj.typ);
+    stav.obj[t].push_back(obj);
+  }
+  for (Vec& item : vznikleVeci) {
+    stav.veci.push_back(item);
+  }
+}
 
-
-  // vytvor niekde asteroid
-  //
+void vrhniAsteroid(Stav& stav, const Mapa& mapa) {
   log("vrham asteroid");
   if (stav.cas % mapa.casAst == 0) {
     int DX[4]={0,1,0,-1};
@@ -642,7 +655,27 @@ void odsimuluj(const Mapa& mapa, Stav& stav, vector<Prikaz>& akcie) {
     kam= kam*(rand_float(AST_MAX_V)/kam.dist());
     stav.obj[ konvertDoStavu(ASTEROID) ].push_back(vytvorAst(kde,kam,polomer));
   }
+}
 
+void odsimuluj(Stav& stav, vector<Prikaz>& akcie, const Mapa& mapa) {
+  // axiomy:
+  // kazdy objekt musi byt zivy aspon 1 jednotku casu
+  // vznikajuce objekty ovplyvnuju a su ovplyvnovane az nasledujucim stavom
+  // laser nie je vznikajuci objekt, ten ovplyvnuje aktualny stav
+
+  opravPrikazy(stav,akcie);
+  okamzityEfekt(stav,akcie,mapa);
+  vypalZoZbrani(stav,akcie,mapa);
+  ziskajPickupy(stav);
+  pohniObjektami(stav);
+  endStep(stav);
+
+  // este pred pochovanim zaznamenaj, lebo umierajuce objekty mozu mat kul animaciu
+  log("zaznamenavam");
+  zaznamuj(stav);
+  pohrebnaSluzba(stav);
+  vrhniAsteroid(stav,mapa);
+  
   log("vypisujem pre observera");
   if (stav.cas % frame_t == 0) {
     vypis();
@@ -651,7 +684,7 @@ void odsimuluj(const Mapa& mapa, Stav& stav, vector<Prikaz>& akcie) {
 
 
 
-bool validvMape (const int& typ) {
+bool validvMape (int typ) {
   return typ<MAPA_TYPOV && typ>=0;
 }
 

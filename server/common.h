@@ -101,11 +101,11 @@ const static double kZ_rychlost[DRUHOV_PROJ]= {1.0, 0.4};
 #define AST_MAX_V 1.0
 
 
-int zbranNaVystrel (const int& zbran) ;
+int zbranNaVystrel (int zbran) ;
 
-int vystrelNaProj (const int& vystrel) ;
+int vystrelNaProj (int vystrel) ;
 
-int vecNaPouzi (const int& vec) ;
+int vecNaPouzi (int vec) ;
 
 struct Bod {
   double x, y;
@@ -114,18 +114,18 @@ struct Bod {
 
   Bod(double x, double y) ;
 
-  Bod operator+(const Bod &iny) const ;
+  Bod operator+(Bod iny) const ;
 
-  Bod operator-(const Bod &iny) const ;
+  Bod operator-(Bod iny) const ;
 
-  Bod operator*(const double &k) const ;
+  Bod operator*(double k) const ;
 
-  bool operator== (const Bod& iny) const ;
+  bool operator== (Bod iny) const ;
 
   double dist() const ;
   double dist2() const ;
-  Bod operator*(const Bod& B) const ;
-  double operator/(const Bod& B) const ;
+  Bod operator*(Bod B) const ;
+  double operator/(Bod B) const ;
 };
 
 struct FyzikalnyObjekt {
@@ -143,8 +143,7 @@ struct FyzikalnyObjekt {
   double zivoty;
   int stit;
 
-  FyzikalnyObjekt (const int& t,const int& own, const Bod& poz,const Bod& v,
-    const double& r, const int& coll, const double& pow,const double& hp) ;
+  FyzikalnyObjekt (int t,int own, Bod poz,Bod v,double r, int coll,double pow,double hp) ;
 
   FyzikalnyObjekt () ;
 
@@ -162,7 +161,7 @@ struct Vybuch {
   int faza;
 
   Vybuch () ;
-  Vybuch (const int& own,const Bod& kde,const double& r,const double& dmg,const int& f) ;
+  Vybuch (int own,Bod kde,double r,double dmg,int f) ;
 };
 
 struct Vec {
@@ -170,7 +169,7 @@ struct Vec {
   int typ;
   int naboje;
 
-  Vec (const Bod& poz,const int& t,const int& ammo) ;
+  Vec (Bod poz,int t,int ammo) ;
   Vec () ;
 
   bool zije () const ;
@@ -184,7 +183,7 @@ struct Hrac {
   int cooldown;
   vector<int> veci;
 
-  Hrac (const Bod& poz) ;
+  Hrac (Bod poz) ;
   Hrac () ;
 
   bool zije () const ;
@@ -209,7 +208,7 @@ struct Mapa { //TODO: popis spawnovania asteroidov
   vector<FyzikalnyObjekt> objekty;
   vector<Vec> veci;
 
-  Mapa (const double& sirka,const double& vyska) ;
+  Mapa (double sirka,double vyska) ;
 
   Mapa () ;
 };
