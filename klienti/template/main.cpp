@@ -24,7 +24,7 @@ void zistiTah() {
   
   prikaz.acc=smer;
   prikaz.ciel= stav.hraci[1].obj.pozicia;
-  prikaz.pal= VYSTREL_PUSKA;
+  prikaz.pal= -1;
 }
 
 int main() {

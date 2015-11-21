@@ -21,7 +21,7 @@ static int volne_zap_id = -INF;
 const static int kNormTypy[NORM_TYPOV] =
   {ASTEROID,PLANETA,HVIEZDA,PROJ_BEGIN};
 
-#define SENTINEL_POLOMER 100.0
+#define SENTINEL_POLOMER 1000.0
 
 #define OBSERVE_VYBUCH 13
 #define OBSERVE_LASER 14

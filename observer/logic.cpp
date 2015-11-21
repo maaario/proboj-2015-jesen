@@ -28,9 +28,15 @@ void Hra::nacitajSubor(string zaznamovySubor) {
 
   ifstream subor(zaznamovySubor);
 
+  string riadok;
+
+  getline(subor, riadok);
+  stringstream riadokStream(riadok);
+  riadokStream >> sirka >> vyska;
+  getline(subor, riadok);
+
   Frame frame;
 
-  string riadok;
   while (getline(subor, riadok)) {
     if (riadok == "") {   // prazdny riadok znamena ukoncenie jedneho framu
       framy.push_back(frame);
@@ -82,6 +88,10 @@ void kresliLod(SDL_Surface *surface, KruhovyObjekt &objekt) {
   }
 }
 
+void kresliVec(SDL_Surface *surface, KruhovyObjekt &objekt) {
+  kresliKruh(surface, objekt.koniec.x, objekt.koniec.y, objekt.polomer, 1.0, 1.0, 0.0, 1.0);
+}
+
 //
 // hlavna funkcia na nakreslenie vsetkeho
 //
@@ -95,6 +105,15 @@ void Frame::kresli(SDL_Surface *surface) {
 
       case LOD: {
         kresliLod(surface, objekt);
+      } break;
+
+      case VEC_PUSKA:
+      case VEC_BOMBA:
+      case VEC_LASER:
+      case VEC_URYCHLOVAC:
+      case VEC_STIT:
+      case VEC_LEKARNICKA: {
+        kresliVec(surface, objekt);
       } break;
 
       default: {

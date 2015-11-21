@@ -32,6 +32,8 @@ struct Frame {
 };
 
 struct Hra {
+  int sirka, vyska;
+
   vector<Frame> framy;
 
   void nacitajSubor(string zaznamovySubor);

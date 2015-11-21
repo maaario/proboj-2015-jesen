@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
   TTF_Init();
   atexit(TTF_Quit);
 
-  SDL_Surface *screen = SDL_SetVideoMode(1024, 768, 32, SDL_SWSURFACE);
+  SDL_Surface *screen = SDL_SetVideoMode(hra.sirka, hra.vyska, 32, SDL_SWSURFACE);
 
   string title = string("Observer - ") + argv[1];
   SDL_WM_SetCaption(title.c_str(), title.c_str());
