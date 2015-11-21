@@ -1,6 +1,7 @@
 #include <iostream>
 #include <unistd.h>
 #include <ctime>
+#include <random>
 
 using namespace std;
 
@@ -11,10 +12,17 @@ Mapa mapa;
 Stav stav; //vzdy som hrac cislo 0
 Prikaz prikaz;
 
+Bod smer(0,0);
+
 // main() zavola tuto funkciu, ked chce vediet, aky prikaz chceme vykonat,
 // co tato funkcia rozhodne pomocou toho, ako nastavi prikaz;
 void zistiTah() {
-  prikaz.acc=Bod(0.5,0.5);
+  double x= rand()%3 - 1;
+  double y= rand()%3 - 1;
+  Bod nahodny(x,y);
+  smer= smer+nahodny;
+  
+  prikaz.acc=smer;
   prikaz.ciel= stav.hraci[1].obj.pozicia;
   prikaz.pal= VYSTREL_PUSKA;
 }

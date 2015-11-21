@@ -272,6 +272,9 @@ void zaznamuj(Stav& stav) {
     zazrel(item.obj);
   }
   for (Hrac& hrac : stav.hraci) {
+    if (!hrac.zije()) {
+      continue;
+    }
     zazrel(hrac.obj);
   }
   for (Vybuch& bum : stav.vybuchy) {
@@ -305,6 +308,9 @@ void odsimuluj(const Mapa& mapa, Stav& stav, vector<Prikaz>& akcie) {
   //
   log("opavujem prikazy klientov");
   for (int i=0; i<(int)akcie.size(); i++) {
+    if (!stav.hraci[i].zije()) {
+      continue;
+    }
     double pomer=akcie[i].acc.dist()/LOD_MAX_ACC;
     if (pomer>1) {
       akcie[i].acc=akcie[i].acc*(1.0/pomer);
@@ -427,6 +433,9 @@ void odsimuluj(const Mapa& mapa, Stav& stav, vector<Prikaz>& akcie) {
   {
     vector<FyzikalnyObjekt*> vznikleObjekty;
     for (int i=0; i<(int)akcie.size(); i++) {
+      if (!stav.hraci[i].zije()) {
+        continue;
+      }
       int pal= akcie[i].pal;
       Bod ciel= akcie[i].ciel;
       
@@ -521,6 +530,9 @@ void odsimuluj(const Mapa& mapa, Stav& stav, vector<Prikaz>& akcie) {
   //
   log("pickupy vec");
   for (Hrac& hrac : stav.hraci) {
+    if (!hrac.zije()) {
+      continue;
+    }
     for (Vec& bonus : stav.veci) {
       if (!zrazka(hrac.obj, bonus.obj)) {
         continue;
@@ -548,7 +560,12 @@ void odsimuluj(const Mapa& mapa, Stav& stav, vector<Prikaz>& akcie) {
   //
   log("cooldown");
   for (Hrac& hrac : stav.hraci) {
-    hrac.cooldown--;
+    if (!hrac.zije()) {
+      continue;
+    }
+    if (hrac.cooldown>0) {
+      hrac.cooldown--;
+    }
   }
   log("vybuchy zniz fazu");
   for (int i=(int)stav.vybuchy.size()-1; i>=0; i--) {

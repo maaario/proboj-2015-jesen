@@ -117,7 +117,11 @@ int main(int argc, char *argv[]) {
     for (Klient &klient: klienti) {
       int kolkaty = akcie.size();
       akcie.push_back(Prikaz());
-      
+
+      if (!stav.hraci[kolkaty].zije()) {
+        continue;
+      }
+
       if (klient.nebezi()) {
         klient.restartuj(stav.cas);
         /*
