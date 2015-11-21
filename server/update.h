@@ -9,6 +9,8 @@
 
 void zapniObservation(std::ostream* observation, const int& ft);
 
+void vypis () ;
+
 void odsimuluj(const Mapa& mapa, Stav& stav, vector<Prikaz>& akcie);
 
 bool pociatocnyStav(Mapa& mapa, Stav& stav, int pocKlientov);

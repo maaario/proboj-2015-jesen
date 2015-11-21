@@ -184,15 +184,17 @@ void rozpad(const FyzikalnyObjekt& obj, vector<FyzikalnyObjekt>& vznikleObjekty,
 
 struct obraz {
   int typ;
+  int owner;
   Bod zac,kon;
   double polomer;
   int note;
 
   obraz () {}
-  obraz (const int& t,const Bod& poz,const double& r,const int& nt) :
-    typ(t), zac(poz), kon(poz), polomer(r), note(nt) {}
+  obraz (const int& t,const int& own,const Bod& poz,const double& r,const int& nt) :
+    typ(t), owner(own), zac(poz), kon(poz), polomer(r), note(nt) {}
   obraz (const FyzikalnyObjekt& obj) {
     typ=obj.typ;
+    owner=obj.owner;
     zac=obj.pozicia;
     kon=obj.pozicia;
     polomer=obj.polomer;
@@ -206,13 +208,15 @@ struct obraz {
   }
   obraz (const Vybuch& bum) {
     typ= OBSERVE_VYBUCH;
+    owner=-1;
     zac=bum.pozicia;
     kon=bum.pozicia;
     polomer=bum.polomer;
     note=bum.faza;
   }
-  obraz (const Bod& start, const Bod& tgt) {
+  obraz (const int& own, const Bod& start, const Bod& tgt) {
     typ= OBSERVE_LASER;
+    owner= own;
     zac= start;
     kon= tgt;
     polomer= 0;
@@ -233,16 +237,6 @@ int konvertDoStavu (const int& typ) {
 }
 
 map<int,obraz> vidim;
-
-template<class T>
-void zazrel(T& obj) {
-  if (vidim.count(obj.id)) {
-    vidim[obj.id].kon= obj.pozicia;
-  }
-  else {
-    vidim[obj.id]= obraz(obj);
-  }
-}
 
 void zazrel(FyzikalnyObjekt& obj) {
   if (vidim.count(obj.id)) {
@@ -277,17 +271,23 @@ void zaznamuj(Stav& stav) {
   for (Vec& item : stav.veci) {
     zazrel(item.obj);
   }
+  for (Hrac& hrac : stav.hraci) {
+    zazrel(hrac.obj);
+  }
   for (Vybuch& bum : stav.vybuchy) {
     zazrel(bum);
   }
 }
 
 void vypis() {
+  if (vidim.empty()) {
+    return;
+  }
   for (pair<const int,obraz>& parik : vidim) {
     obraz* ptr= &parik.second;
-    *g_observation << ptr->typ << " " << ptr->zac.x << " " << ptr->zac.y
-      << " " << ptr->kon.x << " " << ptr->kon.y << " " << ptr->polomer
-      << " " << ptr->note << "\n";
+    *g_observation << ptr->typ << " " << ptr->owner << " " << ptr->zac.x
+      << " " << ptr->zac.y << " " << ptr->kon.x << " " << ptr->kon.y
+      << " " << ptr->polomer << " " << ptr->note << "\n";
   }
   *g_observation << endl;
   vidim.clear();
@@ -472,7 +472,7 @@ void odsimuluj(const Mapa& mapa, Stav& stav, vector<Prikaz>& akcie) {
           
           // observujem  |  |
           //             v  v
-          obraz laser(spawn,ciel);
+          obraz laser(stav.hraci[i].obj.owner, spawn,ciel);
           vidim[volne_zap_id]= laser;
           volne_zap_id++;
         }

@@ -165,6 +165,7 @@ int main(int argc, char *argv[]) {
 
   // end step
   //
+  vypis();
   log("ukoncujeme klientov");
   zabiKlientov();
   
