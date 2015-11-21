@@ -1,4 +1,4 @@
-
+#include <iostream>
 #include <ostream>
 #include <vector>
 #include <queue>
@@ -13,7 +13,8 @@ using namespace std;
 #include "update.h"
 #include "util.h"
 
-#define PRESNOST 100
+#define PRESNOST 21
+#define RANDF_ACC 98765ll
 
 static int volne_zap_id = -INF;
 
@@ -22,6 +23,7 @@ const static int kNormTypy[NORM_TYPOV] =
   {ASTEROID,PLANETA,HVIEZDA,PROJ_BEGIN};
 
 #define SENTINEL_POLOMER 987654.0
+#define SAFE_OD_OKRAJA 20.0
 
 #define OBSERVE_VYBUCH 13
 #define OBSERVE_LASER 14
@@ -37,7 +39,11 @@ void zapniObservation(ostream* observation, int ft) {
 
 
 double rand_float (double d) {
-  return (double)(rand()%int(1.0 + d*PRESNOST))/(double)PRESNOST;
+  return (double)(rand()%int(1.0 + d*RANDF_ACC))/(double)RANDF_ACC;
+}
+double rand_float (double l,double r) {
+  double d= r-l;
+  return l+(double)(rand()%int(1.0 + d*RANDF_ACC))/(double)RANDF_ACC;
 }
 
 
@@ -47,6 +53,7 @@ bool zrazka (const T1& A, const T2& B) {
   return A.polomer + B.polomer > spojnica.dist();
 }
 
+/*
 Bod odpal1 (const FyzikalnyObjekt& A, const FyzikalnyObjekt& B) {
   // zrazka 1. typu, co oddeluje mergnute objekty
   //
@@ -73,6 +80,7 @@ Bod odpal1 (const FyzikalnyObjekt& A, const FyzikalnyObjekt& B) {
   }
   return vysl;
 }
+*/
 
 Bod odpal2 (const FyzikalnyObjekt& A, const FyzikalnyObjekt& B) {
   // zrazka 2. typu, co NEoddeluje mergnute objekty
@@ -143,6 +151,7 @@ void rozpad(const FyzikalnyObjekt& obj, vector<FyzikalnyObjekt>& vznikleObjekty,
       kde= moznePozy[kde];
       double uhol= 2.0*PII*(double)kde/(double)PRESNOST;
       Bod pozicia(0.75*obj.polomer*sin(uhol), 0.75*obj.polomer*cos(uhol));
+      pozicia= obj.pozicia+pozicia;
 
       bool jeVec= (rand_float(1.0) < obj.obsah()*AST_DROP_RATE);
       pozy.push_back(make_pair(jeVec,pozicia));
@@ -237,7 +246,7 @@ int konvertDoStavu (int typ) {
   return -INF;
 }
 
-map<int,obraz> vidim;
+unordered_map<int,obraz> vidim;
 
 void zazrel(FyzikalnyObjekt& obj) {
   if (vidim.count(obj.id)) {
@@ -635,22 +644,22 @@ void pohrebnaSluzba(Stav& stav) {
 }
 
 void vrhniAsteroid(Stav& stav, const Mapa& mapa) {
-  log("vrham asteroid");
   if (stav.cas % mapa.casAst == 0) {
+    log("vrham asteroid");
     int DX[4]={0,1,0,-1};
     int DY[4]={1,0,-1,0};
     int okraj= rand()%4;
-    double polomer= AST_MIN_R + rand_float(AST_MAX_R-AST_MIN_R);
+    double polomer= rand_float(AST_MIN_R,AST_MAX_R);
     Bod kde(rand_float(mapa.w),rand_float(mapa.h));
     switch (DX[okraj]) {
-      case 1: kde.x=mapa.w+polomer; break;
-      case -1: kde.x= -polomer;
+      case 1: kde.x=mapa.w+polomer+SAFE_OD_OKRAJA; break;
+      case -1: kde.x= -polomer-SAFE_OD_OKRAJA;
     }
     switch (DY[okraj]) {
-      case 1: kde.y=mapa.h+polomer; break;
-      case -1: kde.y= -polomer;
+      case 1: kde.y=mapa.h+polomer+SAFE_OD_OKRAJA; break;
+      case -1: kde.y= -polomer-SAFE_OD_OKRAJA;
     }
-    Bod kam(rand_float(mapa.w),rand_float(mapa.h));
+    Bod kam(rand_float(0.25,0.75)*mapa.w,rand_float(0.25,0.75)*mapa.h);
     kam= kam-kde;
     kam= kam*(rand_float(AST_MAX_V)/kam.dist());
     stav.obj[ konvertDoStavu(ASTEROID) ].push_back(vytvorAst(kde,kam,polomer));
@@ -667,13 +676,12 @@ void odsimuluj(Stav& stav, vector<Prikaz>& akcie, const Mapa& mapa) {
   okamzityEfekt(stav,akcie,mapa);
   vypalZoZbrani(stav,akcie,mapa);
   ziskajPickupy(stav);
-  pohniObjektami(stav);
   endStep(stav);
-
-  // este pred pochovanim zaznamenaj, lebo umierajuce objekty mozu mat kul animaciu
+  
   log("zaznamenavam");
   zaznamuj(stav);
   pohrebnaSluzba(stav);
+  pohniObjektami(stav);
   vrhniAsteroid(stav,mapa);
   
   log("vypisujem pre observera");
