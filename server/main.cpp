@@ -31,6 +31,14 @@ void zabiKlientov() {
   }
 }
 
+template<class T> void checkOstream(T& s, string filename) {
+  if (s.fail()) {
+    fprintf(stderr, "neviem zapisovat do %s\n", filename.c_str());
+    zabiKlientov();
+    exit(1);
+  }
+}
+
 int main(int argc, char *argv[]) {
   unsigned int seed = time(NULL) * getpid();
   srand(seed);
@@ -92,6 +100,7 @@ int main(int argc, char *argv[]) {
   const long long fps = 25LL;
   const long long frame_time = 1000LL / fps;
   ofstream observationstream((zaznamovyAdresar+"/observation").c_str());
+  checkOstream(observationstream, zaznamovyAdresar+"/observation");
   zapniObservation(&observationstream,frame_time);
 
   //
@@ -163,4 +172,3 @@ int main(int argc, char *argv[]) {
 
   return 0;
 }
-

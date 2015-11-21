@@ -10,9 +10,11 @@ using namespace std;
 #include "common.h"
 #include "update.h"
 #include "util.h"
-#include "marshal.h"
 
 #define PRESNOST 100
+
+#define OBS_REL 100
+#define OBS_VYBUCH 999
 
 static ostream* g_observation;
 static int frame_time;
@@ -173,6 +175,45 @@ void rozpad(const FyzikalnyObjekt& obj, vector<FyzikalnyObjekt>& vznikleObjekty,
     }
   }
 }
+
+
+
+void vypis(const FyzikalnyObjekt& obj) {
+  *g_observation << obj.typ << " " << obj.pozicia.x << " "
+    << obj.pozicia.y << " " << obj.polomer << " " << "0\n";
+}
+
+void zaznamuj(Stav& stav) {
+  if (stav.cas % frame_time) {
+    return;
+  }
+  for (int t=0; t<STAV_TYPOV; t++) {
+    for (FyzikalnyObjekt& obj : stav.obj[t]) {
+      vypis(obj);
+    }
+  }
+  for (Hrac& hrac : stav.hraci) {
+    if (!hrac.zije()) {
+      continue;
+    }
+    vypis(hrac.obj);
+  }
+  for (Vec& item : stav.veci) {
+    item.obj.typ= item.typ+OBS_REL;
+    vypis(item.obj);
+    item.obj.typ= VEC;
+  }
+  for (Vybuch& bum : stav.vybuchy) {
+    *g_observation << OBS_VYBUCH << " " << bum.pozicia.x << " "
+      << bum.pozicia.y << " " << bum.polomer << " " << bum.faza << "\n";
+  }
+  
+  *g_observation << "\n";
+}
+
+
+
+
 
 void odsimuluj(const Mapa& mapa, Stav& stav, vector<Prikaz>& akcie) {
   // axiomy:
@@ -494,10 +535,7 @@ void odsimuluj(const Mapa& mapa, Stav& stav, vector<Prikaz>& akcie) {
   }
   //*/
 
-  if (stav.cas%frame_time == 0) {
-    uloz(*g_observation,stav);
-    *g_observation << "\n" << endl;
-  }
+  zaznamuj(stav);
 }
 
 
