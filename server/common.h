@@ -49,7 +49,6 @@ const static double kBodyZnic[VSETKO_TYPOV] =
 
 // parametre asteroidu
 #define AST_MIN_R 5.0
-#define AST_MAX_R 50.0
 #define AST_KOLIZNY_LV 10
 #define AST_SILA 10.0
 #define AST_ZIV_RATE 10.0
@@ -67,9 +66,12 @@ const static double kBodyZnic[VSETKO_TYPOV] =
 #define VEC_POLOMER 10.0
 #define VEC_KOLIZNY_LV 5
 #define VEC_SILA 0.0
-#define VEC_ZIVOTY 100.0
+#define VEC_ZIVOTY 0.001
 const static int kV_nabojov[DRUHOV_ZBRANI+DRUHOV_VECI]=
   {20,2,5, 2,2,2};
+#define URYCHLOVAC_SILA 1.0
+#define STIT_TRVANIE 100
+#define LEKARNICKA_SILA 100.0
 
 // parametre bossa
 #define BOSS_POLOMER 30.0
@@ -77,11 +79,13 @@ const static int kV_nabojov[DRUHOV_ZBRANI+DRUHOV_VECI]=
 #define BOSS_SILA 1023456789ll
 #define BOSS_ZIVOTY 1023456789ll
 #define BOSS_MAX_ACC 0.0015
+#define BOSS_PERIODA 500
 
 // parametre sentinelu
 #define SENTINEL_SILA 10.0
 
-// parametre PROJ_BEGINov
+// parametre zbrani
+#define LASER_SILA 0.5
 #define BUM_POLOMER 30.0
 #define BUM_SILA 5.0
 #define BUM_TRVANIE 50
@@ -91,14 +95,10 @@ const static double kZ_sila[DRUHOV_PROJ]= {10.0, 0.0};
 const static double kZ_zivoty[DRUHOV_PROJ]= {0.0001, 0.0001};
 const static double kZ_rychlost[DRUHOV_PROJ]= {1.0, 0.4};
 
-// parametre ostatnych nebezpecnych veci
-#define LASER_SILA 0.5
-
 // ine parametre
 #define INDESTRUCTIBLE 987654321ll
 #define COOLDOWN 25
 #define BROKOV_NA_ZACIATKU 20
-#define AST_MAX_V 1.0
 
 
 int zbranNaVystrel (int zbran) ;
@@ -204,6 +204,8 @@ struct Mapa { //TODO: popis spawnovania asteroidov
   double w,h;
   int casBoss;
   int casAst;
+  double astMinR, astMaxR;
+  double astMinVel, astMaxVel;
   vector<Bod> spawny;
   vector<FyzikalnyObjekt> objekty;
   vector<Vec> veci;
@@ -283,6 +285,10 @@ reflection(Mapa);
   member(h);
   member(casBoss);
   member(casAst);
+  member(astMinR);
+  member(astMaxR);
+  member(astMinVel);
+  member(astMaxVel);
   member(spawny);
   member(objekty);
   member(veci);
