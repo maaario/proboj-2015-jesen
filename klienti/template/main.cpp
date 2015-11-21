@@ -14,9 +14,9 @@ Prikaz prikaz;
 // main() zavola tuto funkciu, ked chce vediet, aky prikaz chceme vykonat,
 // co tato funkcia rozhodne pomocou toho, ako nastavi prikaz;
 void zistiTah() {
-  prikaz.acc=Bod(0.7,-1.0);
+  prikaz.acc=Bod(0.5,0.5);
   prikaz.ciel= stav.hraci[1].obj.pozicia;
-  prikaz.pal= ZBRAN_PUSKA;
+  prikaz.pal= VYSTREL_PUSKA;
 }
 
 int main() {

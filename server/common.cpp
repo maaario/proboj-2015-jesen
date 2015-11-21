@@ -5,10 +5,28 @@
 static int volne_id=0;
 static int volny_hrac=0;
 
-int zbran_na_proj (const int& typ_zbrane) {
-  switch (typ_zbrane) {
-    case ZBRAN_PUSKA: return BROK;
-    case ZBRAN_BOMBA: return BOMBA;
+int zbranNaVystrel (const int& zbran) {
+  switch (zbran) {
+    case VEC_PUSKA: return VYSTREL_PUSKA;
+    case VEC_BOMBA: return VYSTREL_BOMBA;
+    case VEC_LASER: return VYSTREL_LASER;
+  }
+  return -INF;
+}
+
+int vystrelNaProj (const int& vystrel) {
+  switch (vystrel) {
+    case VYSTREL_PUSKA: return BROK;
+    case VYSTREL_BOMBA: return BOMBA;
+  }
+  return -INF;
+}
+
+int vecNaPouzi (const int& vec) {
+  switch (vec) {
+    case VEC_URYCHLOVAC: return POUZI_URYCHLOVAC;
+    case VEC_STIT: return POUZI_STIT;
+    case VEC_LEKARNICKA: return POUZI_LEKARNICKA;
   }
   return -INF;
 }
@@ -100,7 +118,7 @@ Vybuch::Vybuch (const int& own,const Bod& kde,const double& r,const double& dmg,
 
 Vec::Vec (const Bod& poz,const int& t,const int& ammo) : typ(t), naboje(ammo)
 {
-  obj= FyzikalnyObjekt(VEC,-1, poz, Bod(), VEC_POLOMER, VEC_KOLIZNY_LV, VEC_SILA, VEC_ZIVOTY);
+  obj= FyzikalnyObjekt(t,-1, poz, Bod(), VEC_POLOMER, VEC_KOLIZNY_LV, VEC_SILA, VEC_ZIVOTY);
 }
 Vec::Vec () {}
 
@@ -113,8 +131,8 @@ Hrac::Hrac (const Bod& poz) : skore(0.0), zbrane(DRUHOV_ZBRANI,0), cooldown(0), 
 {
   obj=FyzikalnyObjekt(LOD,volny_hrac, poz, Bod(), LOD_POLOMER, LOD_KOLIZNY_LV, LOD_SILA, LOD_ZIVOTY);
   volny_hrac++;
-  zbrane[ZBRAN_PUSKA]= BROKOV_NA_ZACIATKU;
-  zbrane[ZBRAN_BOMBA]= 1000;
+  zbrane[VYSTREL_PUSKA]= BROKOV_NA_ZACIATKU;
+  zbrane[VYSTREL_BOMBA]= 1000;
 }
 Hrac::Hrac () {}
 

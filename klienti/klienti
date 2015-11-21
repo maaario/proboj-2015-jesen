@@ -23,6 +23,6 @@ long_line_behaviour=1
 long_line_column=72
 
 [files]
-current_page=1
-FILE_NAME_0=341;C++;0;EUTF-8;0;1;1;%2Fhome%2Fbui%2FDocuments%2Fksp%2Fproboj-2015-jesen%2Fklienti%2Ftemplate%2Fmain.cpp;0;2
-FILE_NAME_1=612;C++;0;EUTF-8;0;1;1;%2Fhome%2Fbui%2FDocuments%2Fksp%2Fproboj-2015-jesen%2Fklienti%2Fsigsegv%2Fmain.cpp;0;2
+current_page=0
+FILE_NAME_0=428;C++;0;EUTF-8;0;1;1;%2Fhome%2Fbui%2FDocuments%2Fksp%2Fproboj-2015-jesen%2Fklienti%2Ftemplate%2Fmain.cpp;0;2
+FILE_NAME_1=360;C++;0;EUTF-8;0;1;1;%2Fhome%2Fbui%2FDocuments%2Fksp%2Fproboj-2015-jesen%2Fklienti%2Fsigsegv%2Fmain.cpp;0;2

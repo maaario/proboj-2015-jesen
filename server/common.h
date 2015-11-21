@@ -10,31 +10,42 @@ using namespace std;
 #define INF 1023456789ll
 #define PII 3.14159265358979323846
 
-
-#define VSETKO_TYPOV 9
-#define STAV_TYPOV 5
-#define MAPA_TYPOV 4
-
 #define ASTEROID 0
 #define PLANETA 1
 #define HVIEZDA 2
 #define BOSS 3
-#define PROJEKTIL 4
-#define BROK 5
-#define BOMBA 6
-#define VEC 7
-#define LOD 8
+#define PROJ_BEGIN 4
+#define BROK 4
+#define BOMBA 5
+#define VEC_BEGIN 6
+#define VEC_PUSKA 6
+#define VEC_BOMBA 7
+#define VEC_LASER 8
+#define VEC_URYCHLOVAC 9
+#define VEC_STIT 10
+#define VEC_LEKARNICKA 11
+#define LOD 12
+
+#define STAV_TYPOV 5
+const static int kStavTypy[STAV_TYPOV]=
+  {ASTEROID,PLANETA,HVIEZDA,BOSS,PROJ_BEGIN};
+#define MAPA_TYPOV 4
+// parametre tykajuce sa bodovania
+#define VSETKO_TYPOV 13
+const static double kBodyZnic[VSETKO_TYPOV] =
+  {10,500,INF,5000,  0,0,  0,0,0,0,0,0, 5000};
+
 
 #define DRUHOV_ZBRANI 3
 #define DRUHOV_PROJ 2
-#define ZBRAN_PUSKA 0
-#define ZBRAN_BOMBA 1
-#define ZBRAN_LASER 2
+#define VYSTREL_PUSKA 0
+#define VYSTREL_BOMBA 1
+#define VYSTREL_LASER 2
 
 #define DRUHOV_VECI 3
-#define VEC_URYCHLOVAC 0
-#define VEC_STIT 1
-#define VEC_LEKARNICKA 2
+#define POUZI_URYCHLOVAC 0
+#define POUZI_STIT 1
+#define POUZI_LEKARNICKA 2
 
 // parametre asteroidu
 #define AST_MIN_R 5.0
@@ -52,16 +63,12 @@ using namespace std;
 #define LOD_ZIVOTY 100.0
 #define LOD_MAX_ACC 0.005
 
-// parametre sentinelu
-#define SENTINEL_POLOMER 100.0
-#define SENTINEL_SILA 10.0
-
 // parametre veci
 #define VEC_POLOMER 10.0
 #define VEC_KOLIZNY_LV 5
 #define VEC_SILA 0.0
 #define VEC_ZIVOTY 100.0
-const static int vec_nabojov[DRUHOV_ZBRANI+DRUHOV_VECI]=
+const static int kV_nabojov[DRUHOV_ZBRANI+DRUHOV_VECI]=
   {20,2,5, 2,2,2};
 
 // parametre bossa
@@ -71,36 +78,34 @@ const static int vec_nabojov[DRUHOV_ZBRANI+DRUHOV_VECI]=
 #define BOSS_ZIVOTY 1023456789ll
 #define BOSS_MAX_ACC 0.0015
 
-// parametre projektilov
+// parametre sentinelu
+#define SENTINEL_SILA 10.0
+
+// parametre PROJ_BEGINov
 #define BUM_POLOMER 30.0
 #define BUM_SILA 5.0
 #define BUM_TRVANIE 50
-const static double z_polomer[DRUHOV_PROJ]= {5.0, 6.0};
-const static int z_kolizny_lv[DRUHOV_PROJ]= {0, 0};
-const static double z_sila[DRUHOV_PROJ]= {10.0, 0.0};
-const static double z_zivoty[DRUHOV_PROJ]= {0.0001, 0.0001};
-const static double z_rychlost[DRUHOV_PROJ]= {1.0, 0.4};
+const static double kZ_polomer[DRUHOV_PROJ]= {5.0, 6.0};
+const static int kZ_koliznyLv[DRUHOV_PROJ]= {0, 0};
+const static double kZ_sila[DRUHOV_PROJ]= {10.0, 0.0};
+const static double kZ_zivoty[DRUHOV_PROJ]= {0.0001, 0.0001};
+const static double kZ_rychlost[DRUHOV_PROJ]= {1.0, 0.4};
 
 // parametre ostatnych nebezpecnych veci
 #define LASER_SILA 0.5
-
-// parametre tykajuce sa bodovania
-const static double body_za_znic[VSETKO_TYPOV] =
-  {10.0, 500.0, INF, 5000.0, INF, 0,0,0, 500.0};
 
 // ine parametre
 #define INDESTRUCTIBLE 987654321ll
 #define COOLDOWN 25
 #define BROKOV_NA_ZACIATKU 20
-#define NORM_TYPOV 4
-#define CAS_ASTEROID 50
 #define AST_MAX_V 1.0
-const static int norm_typy[NORM_TYPOV] =
-  {ASTEROID,PLANETA,HVIEZDA,PROJEKTIL};
 
 
-int zbran_na_proj (const int& typ_zbrane) ;
+int zbranNaVystrel (const int& zbran) ;
 
+int vystrelNaProj (const int& vystrel) ;
+
+int vecNaPouzi (const int& vec) ;
 
 struct Bod {
   double x, y;
@@ -198,7 +203,8 @@ struct Prikaz {
 
 struct Mapa { //TODO: popis spawnovania asteroidov
   double w,h;
-  vector<int> casBoss;
+  int casBoss;
+  int casAst;
   vector<Bod> spawny;
   vector<FyzikalnyObjekt> objekty;
   vector<Vec> veci;
@@ -277,6 +283,7 @@ reflection(Mapa);
   member(w);
   member(h);
   member(casBoss);
+  member(casAst);
   member(spawny);
   member(objekty);
   member(veci);
@@ -288,7 +295,7 @@ reflection(Stav);
   member(obj[PLANETA]);
   member(obj[HVIEZDA]);
   member(obj[BOSS]);
-  member(obj[PROJEKTIL]);
+  member(obj[PROJ_BEGIN]);
   member(vybuchy);
   member(veci);
   member(hraci);

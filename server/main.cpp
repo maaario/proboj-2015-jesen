@@ -91,24 +91,23 @@ int main(int argc, char *argv[]) {
   log("spustam klientov");
   for (Klient &klient: klienti) {
     klient.spusti();
-
-    //ak mi klient dosial zomrel, tak...
     klient.posli(popisMapy.str().c_str());
     klient.posli(popisStavu.str().c_str());
   }
 
-  const long long fps = 25LL;
+  const long long ups = 100LL;   // updates per second
+  const long long fps = 25LL;    // frames per second
+  const long long delta_time = 1000LL / ups;
   const long long frame_time = 1000LL / fps;
   ofstream observationstream((zaznamovyAdresar+"/observation").c_str());
   checkOstream(observationstream, zaznamovyAdresar+"/observation");
-  zapniObservation(&observationstream,frame_time);
+  zapniObservation( &observationstream, int((frame_time+delta_time-1)/delta_time) );
+  observationstream << mapa.w << " " << mapa.h << "\n" << endl;
 
   //
   // hlavny cyklus
   //
 
-  const long long ups = 100LL;   // updates per second
-  const long long delta_time = 1000LL / ups;
   long long last_time = gettime();
 
   vector<Prikaz> akcie;
@@ -161,6 +160,7 @@ int main(int argc, char *argv[]) {
       usleep(remaining_ms * 1000LL);
     }
     last_time = gettime();
+    log("koniec tahu %d",stav.cas);
   }
 
   // end step
