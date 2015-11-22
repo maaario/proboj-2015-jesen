@@ -7,7 +7,7 @@
 
 #include "common.h"
 
-void zapniObservation(std::ostream* observation, int ft);
+void zapniObservation(std::ostream* observation, double ft);
 
 void vypis (const Stav& stav) ;
 

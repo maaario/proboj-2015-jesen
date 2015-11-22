@@ -15,36 +15,29 @@ using namespace std;
 
 #define PRESNOST 21
 #define RANDF_ACC 98765ll
-
-static int volne_zap_id = -INF;
-
-#define NORM_TYPOV 4
-const static int kNormTypy[NORM_TYPOV] =
-  {ASTEROID,PLANETA,HVIEZDA,PROJ_BEGIN};
-
 #define SENTINEL_POLOMER 987654.0
 #define SAFE_OD_OKRAJA 20.0
 
-#define OBSERVE_VYBUCH 13
-#define OBSERVE_LASER 14
-#define NOTE_UMIERA -1
-#define NOTE_STIT -2
+static int volne_zap_id = -INF;
 
+static double casFrame;
+static double frame_t;
 static ostream* g_observation;
-static int frame_t;
-void zapniObservation(ostream* observation, int ft) {
+
+void zapniObservation(ostream* observation, double ft) {
   g_observation = observation;
-  frame_t=ft;
+  frame_t = ft;
+  casFrame = ft;
 }
 struct obraz {
   int typ;
   int owner;
   Bod zac,kon;
   double polomer;
-  int note;
+  double note;
 
   obraz () {}
-  obraz (int t,int own, Bod poz, double r, int nt) :
+  obraz (int t,int own, Bod poz, double r, double nt) :
     typ(t), owner(own), zac(poz), kon(poz), polomer(r), note(nt) {}
   obraz (const FyzikalnyObjekt& obj) {
     typ=obj.typ;
@@ -126,7 +119,7 @@ void vypis(const Stav& stav) {
   }
   *g_observation << stav.hraci.size();
   for (const Hrac& hrac : stav.hraci) {
-    *g_observation << " " << hrac.skore;
+    *g_observation << " " << hrac.obj.owner << " " << hrac.skore;
   }
   *g_observation << "\n";
   for (pair<const int,obraz>& parik : vidim) {
@@ -242,7 +235,7 @@ void rozpad(const FyzikalnyObjekt& obj, vector<FyzikalnyObjekt>& vznikleObjekty,
   }
   
   if (obj.polomer/2 < AST_MIN_R) {
-    if (rand_float(1.0) < obj.obsah()*AST_DROP_RATE) {
+    if (rand_float(1.0) < AST_DROP_RATE) {
       vznikleVeci.push_back(vytvorVec(obj.pozicia,obj.rychlost));
     }
     return;
@@ -263,7 +256,7 @@ void rozpad(const FyzikalnyObjekt& obj, vector<FyzikalnyObjekt>& vznikleObjekty,
       Bod pozicia(0.75*obj.polomer*sin(uhol), 0.75*obj.polomer*cos(uhol));
       pozicia= obj.pozicia+pozicia;
 
-      bool jeVec= (rand_float(1.0) < obj.obsah()*AST_DROP_RATE);
+      bool jeVec= (rand_float(1.0) < AST_DROP_RATE);
       pozy.push_back(make_pair(jeVec,pozicia));
       
       int obsadenyUsek= PRESNOST;
@@ -349,7 +342,7 @@ void vykonajPrikazy(Stav& stav,vector<Prikaz>& akcie) {
         stav.hraci[i].obj.zivoty = LOD_ZIVOTY;
       }
     }
-    stav.hraci[i].obj.rychlost= stav.hraci[i].obj.rychlost + akcie[i].acc;
+    stav.hraci[i].obj.zrychli(akcie[i].acc);
     for (int j=0; j<DRUHOV_VECI; j++) {
       stav.hraci[i].veci[j]-= (akcie[i].pouzi[j] > 0);
     }
@@ -375,7 +368,7 @@ void udrz(FyzikalnyObjekt& obj, const Mapa& mapa) {
     }
     FyzikalnyObjekt sentinel(-1,-1,Bod(x,y),Bod(),SENTINEL_POLOMER,INF,SENTINEL_SILA,INF);
     Bod acc= odpal(obj,sentinel);
-    obj.rychlost= obj.rychlost+acc;
+    obj.okamziteZrychli(acc);
     if (! obj.neznicitelny() ) {
       obj.zivoty -= sentinel.sila*acc.dist();
     }
@@ -386,7 +379,6 @@ void pohniBossom(FyzikalnyObjekt& obj, Stav& stav) {
   // so far, bossovia su indestructible
   // aby sa mohli hybat hlupo (burat do hviezd)
   //
-  log("bossujem");
   Bod kam(obj.pozicia);
   double best= INF;
   for (int i=0; i<(int)stav.hraci.size(); i++) {
@@ -399,7 +391,7 @@ void pohniBossom(FyzikalnyObjekt& obj, Stav& stav) {
   }
   kam= kam-obj.pozicia;
   kam= kam*(BOSS_MAX_ACC/best);
-  obj.rychlost= obj.rychlost+kam;
+  obj.zrychli(kam);
 }
 
 void zoznamObjekty(Stav& stav, vector<FyzikalnyObjekt*>& objekty) {
@@ -429,6 +421,7 @@ void okamzityEfekt(Stav& stav,const vector<Prikaz>& akcie,const Mapa& mapa) {
 
   // pohni bossmi
   //
+  log("bossujem");
   for (FyzikalnyObjekt& boss : stav.obj[konvertDoStavu(BOSS)]) {
     pohniBossom(boss,stav);
   }
@@ -453,7 +446,7 @@ void okamzityEfekt(Stav& stav,const vector<Prikaz>& akcie,const Mapa& mapa) {
           skore[druhy->owner]+= damage;
         }
       }
-      prvy->rychlost= prvy->rychlost + acc;
+      prvy->okamziteZrychli(acc);
     }
 
     // hori? (je vo vybuchu?)
@@ -559,6 +552,7 @@ void vypalZoZbrane(Stav& stav,const vector<Prikaz>& akcie,const Mapa& mapa) {
     }
     else {
       if (pal==VYSTREL_LASER) {
+        stav.hraci[i].cooldown= COOLDOWN;
         // observujem  |  |
         //             v  v
         obraz laser(stav.hraci[i].obj.owner, spawn,ciel);
@@ -599,7 +593,7 @@ void pohniObjektami(Stav& stav) {
   vector<FyzikalnyObjekt*> objekty;
   zoznamObjekty(stav,objekty);
   for (FyzikalnyObjekt* ptr : objekty) {
-    ptr->pozicia= ptr->pozicia + ptr->rychlost*VELKA_KONSTANTA;
+    ptr->pohni();
   }
 }
 
@@ -612,18 +606,21 @@ void endStep(Stav& stav) {
       continue;
     }
     if (hrac.cooldown>0) {
-      hrac.cooldown--;
+      hrac.cooldown-= DELTA_TIME;
+    }
+    if (hrac.obj.stit>0) {
+      hrac.obj.stit-= DELTA_TIME;
     }
   }
   log("vybuchy zniz fazu");
   for (int i=(int)stav.vybuchy.size()-1; i>=0; i--) {
-    stav.vybuchy[i].faza--;
+    stav.vybuchy[i].faza-= DELTA_TIME;
     if (stav.vybuchy[i].faza<=0) {
       stav.vybuchy[i]= stav.vybuchy.back();
       stav.vybuchy.pop_back();
     }
   }
-  stav.cas++;
+  stav.cas+= DELTA_TIME;
 }
 
 void pohrebnaSluzba(Stav& stav) {
@@ -664,8 +661,10 @@ void pohrebnaSluzba(Stav& stav) {
 }
 
 void vrhniAsteroid(Stav& stav, const Mapa& mapa) {
-  if (stav.cas % mapa.casAst == 0) {
+  stav.casAst-= DELTA_TIME;
+  if (stav.casAst <= 0) {
     log("vrham asteroid");
+    stav.casAst= mapa.casAst;
     int okraj= rand()%4;
     double polomer= rand_float(mapa.astMinR,mapa.astMaxR);
     Bod kde= nahodnyNaOkraji(okraj,polomer,mapa);
@@ -677,17 +676,16 @@ void vrhniAsteroid(Stav& stav, const Mapa& mapa) {
 }
 
 void zavolajBossa(Stav& stav, const Mapa& mapa) {
-  if (stav.cas < mapa.casBoss) {
-    return;
+  stav.casBoss-= DELTA_TIME;
+  if (stav.casBoss <= 0) {
+    log("volam bossa");
+    stav.casBoss= BOSS_PERIODA;
+    int okraj= rand()%4;
+    Bod spawn= nahodnyNaOkraji(okraj,BOSS_POLOMER,mapa);
+    FyzikalnyObjekt boss(BOSS,-1, spawn,Bod(),BOSS_POLOMER, BOSS_KOLIZNY_LV,
+      BOSS_SILA,BOSS_ZIVOTY);
+    stav.obj[ konvertDoStavu(BOSS) ].push_back(boss);
   }
-  if ((stav.cas-mapa.casBoss)%BOSS_PERIODA != 0) {
-    return;
-  }
-  int okraj= rand()%4;
-  Bod spawn= nahodnyNaOkraji(okraj,BOSS_POLOMER,mapa);
-  FyzikalnyObjekt boss(BOSS,-1, spawn,Bod(),BOSS_POLOMER, BOSS_KOLIZNY_LV,
-    BOSS_SILA,BOSS_ZIVOTY);
-  stav.obj[ konvertDoStavu(BOSS) ].push_back(boss);
 }
   
 
@@ -712,8 +710,10 @@ void odsimuluj(Stav& stav, vector<Prikaz>& akcie, const Mapa& mapa) {
   vrhniAsteroid(stav,mapa);
   zavolajBossa(stav,mapa);
   
-  log("vypisujem pre observera");
-  if (stav.cas % frame_t == 0) {
+  casFrame-= DELTA_TIME;
+  if (casFrame <= 0) {
+    log("vypisujem pre observera");
+    casFrame= frame_t;
     vypis(stav);
   }
 }
@@ -725,7 +725,9 @@ bool validvMape (int typ) {
 }
 
 bool pociatocnyStav(Mapa& mapa, Stav& stav, int pocKlientov) {
-  stav.cas = 0;
+  stav.cas = 0.0;
+  stav.casAst= mapa.casAst;
+  stav.casBoss= mapa.casBoss;
 
   if ((int)mapa.spawny.size() < pocKlientov) {
     log("prilis malo spawnov v mape");
