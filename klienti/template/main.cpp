@@ -12,17 +12,19 @@ Mapa mapa;
 Stav stav; //vzdy som hrac cislo 0
 Prikaz prikaz;
 
-Bod smer(0,0);
+Bod kam(-1,-1);
 
 // main() zavola tuto funkciu, ked chce vediet, aky prikaz chceme vykonat,
 // co tato funkcia rozhodne pomocou toho, ako nastavi prikaz;
 void zistiTah() {
-  double x= rand()%3 - 1;
-  double y= rand()%3 - 1;
-  Bod nahodny(x,y);
-  smer= smer+nahodny;
+  if (kam.x<0 || kam.y<0 || kam.x>mapa.w || kam.y>mapa.h) {
+    kam=stav.hraci[0].obj.pozicia;
+  }
+  double dx= rand()%3 - 1;
+  double dy= rand()%3 - 1;
+  kam= kam+Bod(dx,dy);
+  prikaz.acc= kam-stav.hraci[0].obj.pozicia;
   
-  prikaz.acc=smer;
   double best= INF;
   int kto= -1;
   for (int i=1; i<(int)stav.hraci.size(); i++) {

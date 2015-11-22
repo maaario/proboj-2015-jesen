@@ -169,11 +169,20 @@ int main(int argc, char *argv[]) {
 
   // end step
   //
-  vypis();
+  vypis(stav);
+  observationstream.close();
+  
+  vector<double> vysledky;
+  for (Hrac& hrac : stav.hraci) {
+    vysledky.push_back(hrac.skore);
+  }
+  ofstream rankstream((zaznamovyAdresar+"/rank").c_str());
+  checkOstream(rankstream, zaznamovyAdresar+"/rank");
+  uloz(rankstream,vysledky);
+  rankstream.close();
+  
   log("ukoncujeme klientov");
   zabiKlientov();
   
-  observationstream.close();
-
   return 0;
 }

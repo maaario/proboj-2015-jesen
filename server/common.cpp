@@ -127,12 +127,13 @@ bool Vec::zije () const {
 }
 
 
-Hrac::Hrac (Bod poz) : skore(0.0), zbrane(DRUHOV_ZBRANI,0), cooldown(0), veci(DRUHOV_VECI,0)
+Hrac::Hrac (Bod poz) : skore(0.0), cooldown(0), veci(DRUHOV_VECI,0)
 {
   obj=FyzikalnyObjekt(LOD,volny_hrac, poz, Bod(), LOD_POLOMER, LOD_KOLIZNY_LV, LOD_SILA, LOD_ZIVOTY);
   volny_hrac++;
-  zbrane[VYSTREL_PUSKA]= BROKOV_NA_ZACIATKU;
-  zbrane[VYSTREL_BOMBA]= 1000;
+  for (int i=0; i<DRUHOV_ZBRANI; i++) {
+    zbrane.push_back(k_nabojovNaZac[i]);
+  }
 }
 Hrac::Hrac () {}
 

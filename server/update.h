@@ -9,7 +9,7 @@
 
 void zapniObservation(std::ostream* observation, int ft);
 
-void vypis () ;
+void vypis (const Stav& stav) ;
 
 void odsimuluj(Stav& stav, vector<Prikaz>& akcie,const Mapa& mapa);
 

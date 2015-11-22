@@ -8,97 +8,99 @@
 using namespace std;
 
 #define INF 1023456789ll
+#define EPS 0.0000000001
 #define PII 3.14159265358979323846
 
-#define ASTEROID 0
-#define PLANETA 1
-#define HVIEZDA 2
-#define BOSS 3
-#define PROJ_BEGIN 4
-#define BROK 4
-#define BOMBA 5
-#define VEC_BEGIN 6
-#define VEC_PUSKA 6
-#define VEC_BOMBA 7
-#define VEC_LASER 8
-#define VEC_URYCHLOVAC 9
-#define VEC_STIT 10
-#define VEC_LEKARNICKA 11
-#define LOD 12
+#define ASTEROID    0
+#define PLANETA     1
+#define HVIEZDA     2
+#define BOSS        3
+#define PROJ_BEGIN  4
+#define BROK        4
+#define BOMBA       5
+#define VEC_BEGIN       6
+#define VEC_PUSKA       6
+#define VEC_BOMBA       7
+#define VEC_LASER       8
+#define VEC_URYCHLOVAC  9
+#define VEC_STIT        10
+#define VEC_LEKARNICKA  11
+#define LOD             12
 
-#define STAV_TYPOV 5
+#define STAV_TYPOV      5
 const static int kStavTypy[STAV_TYPOV]=
   {ASTEROID,PLANETA,HVIEZDA,BOSS,PROJ_BEGIN};
-#define MAPA_TYPOV 4
-// parametre tykajuce sa bodovania
-#define VSETKO_TYPOV 13
+#define MAPA_TYPOV      4
+#define VSETKO_TYPOV    13
 const static double kBodyZnic[VSETKO_TYPOV] =
-  {10,500,INF,5000,  0,0,  0,0,0,0,0,0, 5000};
+  {10,5000,INF,5000,  0,0,  0,0,0,0,0,0, 5000};
 
+#define VELKA_KONSTANTA 1.0
 
-#define DRUHOV_ZBRANI 3
-#define DRUHOV_PROJ 2
-#define VYSTREL_PUSKA 0
-#define VYSTREL_BOMBA 1
-#define VYSTREL_LASER 2
+#define DRUHOV_ZBRANI   3
+#define DRUHOV_PROJ     2
+#define VYSTREL_PUSKA   0
+#define VYSTREL_BOMBA   1
+#define VYSTREL_LASER   2
 
-#define DRUHOV_VECI 3
-#define POUZI_URYCHLOVAC 0
-#define POUZI_STIT 1
-#define POUZI_LEKARNICKA 2
+#define DRUHOV_VECI       3
+#define POUZI_URYCHLOVAC  0
+#define POUZI_STIT        1
+#define POUZI_LEKARNICKA  2
 
 // parametre asteroidu
-#define AST_MIN_R 5.0
-#define AST_KOLIZNY_LV 10
-#define AST_SILA 10.0
-#define AST_ZIV_RATE 10.0
-#define AST_DROP_RATE 0.02
-#define AST_ROZPAD_ACC 0.5
+#define AST_MIN_R       5.0
+#define AST_KOLIZNY_LV  10
+#define AST_SILA        10.0
+#define AST_ZIV_RATE    10.0
+#define AST_DROP_RATE   0.004
+#define AST_ROZPAD_ACC  0.5
 
 // parametre lode
-#define LOD_POLOMER 10.0
-#define LOD_KOLIZNY_LV 10
-#define LOD_SILA 10.0
-#define LOD_ZIVOTY 100.0
-#define LOD_MAX_ACC 0.005
+#define LOD_POLOMER     10.0
+#define LOD_KOLIZNY_LV  10
+#define LOD_SILA        10.0
+#define LOD_ZIVOTY      100.0
+#define LOD_MAX_ACC     0.01
 
 // parametre veci
-#define VEC_POLOMER 10.0
-#define VEC_KOLIZNY_LV 5
-#define VEC_SILA 0.0
-#define VEC_ZIVOTY 0.001
+#define VEC_POLOMER     7.5
+#define VEC_KOLIZNY_LV  1
+#define VEC_SILA        0.0
+#define VEC_ZIVOTY      EPS
 const static int kV_nabojov[DRUHOV_ZBRANI+DRUHOV_VECI]=
   {20,2,5, 2,2,2};
 #define URYCHLOVAC_SILA 1.0
-#define STIT_TRVANIE 100
-#define LEKARNICKA_SILA 100.0
+#define STIT_TRVANIE    100
+#define LEKARNICKA_SILA 0.5
 
 // parametre bossa
-#define BOSS_POLOMER 30.0
+#define BOSS_POLOMER    20.0
 #define BOSS_KOLIZNY_LV 100
-#define BOSS_SILA 1023456789ll
-#define BOSS_ZIVOTY 1023456789ll
-#define BOSS_MAX_ACC 0.0015
-#define BOSS_PERIODA 500
+#define BOSS_SILA       INF
+#define BOSS_ZIVOTY     INF
+#define BOSS_MAX_ACC    0.015
+#define BOSS_PERIODA    100
 
 // parametre sentinelu
-#define SENTINEL_SILA 10.0
+#define SENTINEL_SILA   10.0
 
 // parametre zbrani
-#define LASER_SILA 0.5
-#define BUM_POLOMER 30.0
-#define BUM_SILA 5.0
-#define BUM_TRVANIE 50
-const static double kZ_polomer[DRUHOV_PROJ]= {5.0, 6.0};
-const static int kZ_koliznyLv[DRUHOV_PROJ]= {0, 0};
-const static double kZ_sila[DRUHOV_PROJ]= {10.0, 0.0};
-const static double kZ_zivoty[DRUHOV_PROJ]= {0.0001, 0.0001};
-const static double kZ_rychlost[DRUHOV_PROJ]= {1.0, 0.4};
+#define COOLDOWN        30
+#define LASER_SILA      0.5
+#define BUM_POLOMER     30.0
+#define BUM_SILA        2.0
+#define BUM_TRVANIE     50
+const static double k_polomer[DRUHOV_PROJ]= {5.0, 6.0};
+const static int k_koliznyLv[DRUHOV_PROJ]= {5, 5};
+const static double k_sila[DRUHOV_PROJ]= {10.0, 0.0};
+const static double k_zivoty[DRUHOV_PROJ]=
+  {EPS, EPS};
+const static double k_rychlost[DRUHOV_PROJ]= {2.0, 1.0};
+const static int k_nabojovNaZac[DRUHOV_ZBRANI]= {10,0,0};
 
 // ine parametre
-#define INDESTRUCTIBLE 987654321ll
-#define COOLDOWN 25
-#define BROKOV_NA_ZACIATKU 20
+#define INDESTRUCTIBLE  987654321ll
 
 
 int zbranNaVystrel (int zbran) ;

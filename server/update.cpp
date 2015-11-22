@@ -120,10 +120,15 @@ void zaznamuj(Stav& stav) {
     zazrel(bum);
   }
 }
-void vypis() {
+void vypis(const Stav& stav) {
   if (vidim.empty()) {
     return;
   }
+  *g_observation << stav.hraci.size();
+  for (const Hrac& hrac : stav.hraci) {
+    *g_observation << " " << hrac.skore;
+  }
+  *g_observation << "\n";
   for (pair<const int,obraz>& parik : vidim) {
     obraz* ptr= &parik.second;
     *g_observation << ptr->typ << " " << ptr->owner << " " << ptr->zac.x
@@ -242,7 +247,7 @@ void rozpad(const FyzikalnyObjekt& obj, vector<FyzikalnyObjekt>& vznikleObjekty,
     }
     return;
   }
-  vznikleObjekty.push_back(vytvorAst(obj.pozicia,obj.rychlost,obj.polomer));
+  vznikleObjekty.push_back(vytvorAst(obj.pozicia,obj.rychlost,obj.polomer/2));
   
   vector<pair<bool,Bod> > pozy;
   {
@@ -339,7 +344,7 @@ void vykonajPrikazy(Stav& stav,vector<Prikaz>& akcie) {
       stav.hraci[i].obj.stit+= STIT_TRVANIE;
     }
     if (akcie[i].pouzi[POUZI_LEKARNICKA]) {
-      stav.hraci[i].obj.zivoty+= LEKARNICKA_SILA;
+      stav.hraci[i].obj.zivoty+= LEKARNICKA_SILA*LOD_ZIVOTY;
       if (stav.hraci[i].obj.zivoty > LOD_ZIVOTY) {
         stav.hraci[i].obj.zivoty = LOD_ZIVOTY;
       }
@@ -492,7 +497,7 @@ void okamzityEfekt(Stav& stav,const vector<Prikaz>& akcie,const Mapa& mapa) {
           Bod spojnica= prvy->pozicia-spawn;
           Bod pata= spojnica*smer;
           Bod kolmica= spojnica-pata;
-          if (pata/spojnica < 0) {
+          if (pata/smer < 0) {
             continue;
           }
           if (kolmica.dist() >= prvy->polomer) {
@@ -521,7 +526,7 @@ void okamzityEfekt(Stav& stav,const vector<Prikaz>& akcie,const Mapa& mapa) {
   }
 }
 
-void vypalZoZbrani(Stav& stav,const vector<Prikaz>& akcie,const Mapa& mapa) {
+void vypalZoZbrane(Stav& stav,const vector<Prikaz>& akcie,const Mapa& mapa) {
   log("palim zo zbrani");
   for (int i=0; i<(int)akcie.size(); i++) {
     if (!stav.hraci[i].zije()) {
@@ -533,6 +538,7 @@ void vypalZoZbrani(Stav& stav,const vector<Prikaz>& akcie,const Mapa& mapa) {
     if (pal==-1) {
       continue;
     }
+    stav.hraci[i].zbrane[pal]--;
     int owner= stav.hraci[i].obj.owner;
     Bod poz= stav.hraci[i].obj.pozicia;
     Bod rychl= stav.hraci[i].obj.rychlost;
@@ -540,13 +546,13 @@ void vypalZoZbrani(Stav& stav,const vector<Prikaz>& akcie,const Mapa& mapa) {
     
     Bod smer= ciel-poz;
     int proj= vystrelNaProj(pal);
-    double safedist= polomer+1.0 + (proj!=-INF ? kZ_polomer[pal] : 0.0);
+    double safedist= polomer+1.0 + (proj!=-INF ? k_polomer[pal] : 0.0);
     Bod spawn= poz + smer*(safedist/smer.dist());
 
     if (proj!=-INF) {
-      smer=smer*(kZ_rychlost[pal]/smer.dist());
+      smer=smer*(k_rychlost[pal]/smer.dist());
       Bod p_rychl= rychl+smer;
-      FyzikalnyObjekt strela(proj,owner, spawn,p_rychl, kZ_polomer[pal], kZ_koliznyLv[pal], kZ_sila[pal], kZ_zivoty[pal]);
+      FyzikalnyObjekt strela(proj,owner, spawn,p_rychl, k_polomer[pal], k_koliznyLv[pal], k_sila[pal], k_zivoty[pal]);
       udrz(strela,mapa);
       stav.obj[PROJ_BEGIN].push_back(strela);
       stav.hraci[i].cooldown= COOLDOWN;
@@ -593,7 +599,7 @@ void pohniObjektami(Stav& stav) {
   vector<FyzikalnyObjekt*> objekty;
   zoznamObjekty(stav,objekty);
   for (FyzikalnyObjekt* ptr : objekty) {
-    ptr->pozicia= ptr->pozicia + ptr->rychlost;
+    ptr->pozicia= ptr->pozicia + ptr->rychlost*VELKA_KONSTANTA;
   }
 }
 
@@ -694,7 +700,7 @@ void odsimuluj(Stav& stav, vector<Prikaz>& akcie, const Mapa& mapa) {
   opravPrikazy(stav,akcie);
   vykonajPrikazy(stav,akcie);
   okamzityEfekt(stav,akcie,mapa);
-  vypalZoZbrani(stav,akcie,mapa);
+  vypalZoZbrane(stav,akcie,mapa);
   ziskajPickupy(stav);
   endStep(stav);
   
@@ -708,7 +714,7 @@ void odsimuluj(Stav& stav, vector<Prikaz>& akcie, const Mapa& mapa) {
   
   log("vypisujem pre observera");
   if (stav.cas % frame_t == 0) {
-    vypis();
+    vypis(stav);
   }
 }
 
