@@ -4,8 +4,18 @@
 
 #include <string>
 #include <vector>
+#include <map>
+
+#include "SDL.h"
 
 #include "common.h"
+
+struct Obrazky {
+  map<string, vector<SDL_Surface*>> obrazky;
+
+  void nacitaj(string meno, string subor);
+  void kresli(SDL_Surface *surface, string meno, int index, double x, double y, double polomer);
+};
 
 struct KruhovyObjekt {
   int typ;
@@ -28,7 +38,7 @@ struct KruhovyObjekt {
 struct Frame {
   vector<KruhovyObjekt> kruhoveObjekty;
 
-  void kresli(SDL_Surface *surface);
+  void kresli(SDL_Surface *surface, Obrazky &obrazky);
 };
 
 struct Hra {

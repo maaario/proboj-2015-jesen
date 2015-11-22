@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <string>
 #include "SDL.h"
+#include "SDL_image.h"
 #include "SDL_ttf.h"
 using namespace std;
 
@@ -32,10 +33,16 @@ int main(int argc, char *argv[]) {
   TTF_Init();
   atexit(TTF_Quit);
 
+  IMG_Init(IMG_INIT_PNG);
+  atexit(IMG_Quit);
+
   SDL_Surface *screen = SDL_SetVideoMode(hra.sirka, hra.vyska, 32, SDL_SWSURFACE);
 
   string title = string("Observer - ") + argv[1];
   SDL_WM_SetCaption(title.c_str(), title.c_str());
+
+  Obrazky obrazky;
+  obrazky.nacitaj("avatar", "observer/obrazky/avatar.png");
 
   double cas = 0.0;   // na ktorom ticku hry sme, samozrejme az po zaokruhleni
   double rychlost = 1.0;
@@ -84,7 +91,7 @@ int main(int argc, char *argv[]) {
 
     SDL_FillRect(screen, &screen->clip_rect, FARBA_POZADIA);    // vycistime obrazovku
 
-    hra.framy[tick].kresli(screen);                             // nakreslime sucasny stav
+    hra.framy[tick].kresli(screen, obrazky);                    // nakreslime sucasny stav
 
     SDL_Flip(screen);                                           // zobrazime, co sme nakreslili, na obrazovku
 
