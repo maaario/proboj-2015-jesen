@@ -68,7 +68,7 @@ const static double kBodyZnic[VSETKO_TYPOV] =
 #define LOD_MAX_ACC     100.0
 
 // parametre veci
-#define VEC_POLOMER     7.0
+#define VEC_POLOMER     6.0
 #define VEC_KOLIZNY_LV  1
 #define VEC_SILA        0.0
 #define VEC_ZIVOTY      EPS

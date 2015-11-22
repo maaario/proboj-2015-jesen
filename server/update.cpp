@@ -119,7 +119,7 @@ void vypis(const Stav& stav) {
   }
   *g_observation << stav.hraci.size();
   for (const Hrac& hrac : stav.hraci) {
-    *g_observation << " " << hrac.skore;
+    *g_observation << " " << hrac.obj.owner << " " << hrac.skore;
   }
   *g_observation << "\n";
   for (pair<const int,obraz>& parik : vidim) {
