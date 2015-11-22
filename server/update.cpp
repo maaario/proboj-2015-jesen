@@ -121,11 +121,21 @@ void vypis(const Stav& stav) {
   if (vidim.empty()) {
     return;
   }
-  *g_observation << stav.hraci.size();
+  *g_observation << stav.hraci.size() << "\n";
   for (const Hrac& hrac : stav.hraci) {
-    *g_observation << " " << hrac.obj.owner << " " << hrac.skore;
+    // owner, skore, zivoty,
+    // nabojov_puska, nabojov_bomba, nabojov_laser,
+    // nabojov_urychl, nabojov_stit, nabojov_lekar
+    *g_observation << " " << hrac.obj.owner << " " << hrac.skore << " "
+      << hrac.obj.zivoty;
+    for (int i=0; i<DRUHOV_ZBRANI; i++) {
+      *g_observation << " " << hrac.zbrane[i];
+    }
+    for (int i=0; i<DRUHOV_VECI; i++) {
+      *g_observation << " " << hrac.veci[i];
+    }
+    *g_observation << "\n";
   }
-  *g_observation << "\n";
   for (pair<const int,obraz>& parik : vidim) {
     obraz* ptr= &parik.second;
     *g_observation << ptr->typ << " " << ptr->owner << " " << ptr->zac.x

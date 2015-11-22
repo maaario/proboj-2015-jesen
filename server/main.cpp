@@ -98,6 +98,10 @@ int main(int argc, char *argv[]) {
   ofstream observationstream((zaznamovyAdresar+"/observation").c_str());
   checkOstream(observationstream, zaznamovyAdresar+"/observation");
   zapniObservation( &observationstream, FRAME_TIME);
+  observationstream << klienti.size() << "\n";
+  for (int i=0; i<(int)klienti.size(); i++) {
+    observationstream << klienti[i].getLabel() << "\n";
+  }
   observationstream << mapa.w << " " << mapa.h << "\n" << endl;
 
   //
