@@ -13,6 +13,9 @@ using namespace std;
 
 #define FPS 30
 
+#define RYCHLOST_KAMERY 1000
+#define RYCHLOST_ZOOMU  2.0
+
 #define FARBA_POZADIA   0x101010
 
 int main(int argc, char *argv[]) {
@@ -43,6 +46,10 @@ int main(int argc, char *argv[]) {
 
   Obrazky obrazky;
   obrazky.nacitaj("avatar", "observer/obrazky/avatar.png");
+
+  Kamera kamera(Bod(hra.sirka / 2, hra.vyska / 2), 1.0);
+  Bod pohybKamery(0, 0);
+  int zoomKamery = 0;
 
   double cas = 0.0;   // na ktorom ticku hry sme, samozrejme az po zaokruhleni
   double rychlost = 1.0;
@@ -79,9 +86,64 @@ int main(int argc, char *argv[]) {
           case SDLK_MINUS: {
             rychlost *= 0.8;
           } break;
+
+          case SDLK_LEFT: {
+            pohybKamery.x -= RYCHLOST_KAMERY;
+          } break;
+
+          case SDLK_RIGHT: {
+            pohybKamery.x += RYCHLOST_KAMERY;
+          } break;
+
+          case SDLK_UP: {
+            pohybKamery.y -= RYCHLOST_KAMERY;
+          } break;
+
+          case SDLK_DOWN: {
+            pohybKamery.y += RYCHLOST_KAMERY;
+          } break;
+
+          case SDLK_1: {
+            zoomKamery -= 1;
+          } break;
+
+          case SDLK_2: {
+            zoomKamery += 1;
+          } break;
+        }
+      } else if (event.type == SDL_KEYUP) {
+        int key = event.key.keysym.sym;
+
+        switch (key) {
+          case SDLK_LEFT: {
+            pohybKamery.x += RYCHLOST_KAMERY;
+          } break;
+
+          case SDLK_RIGHT: {
+            pohybKamery.x -= RYCHLOST_KAMERY;
+          } break;
+
+          case SDLK_UP: {
+            pohybKamery.y += RYCHLOST_KAMERY;
+          } break;
+
+          case SDLK_DOWN: {
+            pohybKamery.y -= RYCHLOST_KAMERY;
+          } break;
+
+          case SDLK_1: {
+            zoomKamery += 1;
+          } break;
+
+          case SDLK_2: {
+            zoomKamery -= 1;
+          } break;
         }
       }
     }
+
+    kamera.pozicia = kamera.pozicia + pohybKamery * (1.0 / FPS);
+    kamera.zoom *= 1.0 + RYCHLOST_ZOOMU * zoomKamery * (1.0 / FPS);
 
     if (!pauza) cas += rychlost;
     if (cas < 0) cas = 0;
@@ -91,7 +153,7 @@ int main(int argc, char *argv[]) {
 
     SDL_FillRect(screen, &screen->clip_rect, FARBA_POZADIA);    // vycistime obrazovku
 
-    hra.framy[tick].kresli(screen, obrazky);                    // nakreslime sucasny stav
+    hra.framy[tick].kresli(screen, kamera, obrazky);            // nakreslime sucasny stav
 
     SDL_Flip(screen);                                           // zobrazime, co sme nakreslili, na obrazovku
 

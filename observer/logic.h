@@ -10,6 +10,18 @@
 
 #include "common.h"
 
+struct Kamera {
+  Bod pozicia;
+  double zoom;
+
+  Kamera(Bod pozicia, double zoom) {
+    this->pozicia = pozicia;
+    this->zoom = zoom;
+  }
+
+  Bod transformuj(Bod bod, double sirkaObrazovky, double vyskaObrazovky);
+};
+
 struct Obrazky {
   map<string, vector<SDL_Surface*>> obrazky;
 
@@ -36,14 +48,14 @@ struct KruhovyObjekt {
 };
 
 struct Frame {
+  int sirka, vyska;
   vector<KruhovyObjekt> kruhoveObjekty;
 
-  void kresli(SDL_Surface *surface, Obrazky &obrazky);
+  void kresli(SDL_Surface *surface, Kamera &kamera, Obrazky &obrazky);
 };
 
 struct Hra {
   int sirka, vyska;
-
   vector<Frame> framy;
 
   void nacitajSubor(string zaznamovySubor);
