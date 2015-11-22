@@ -105,6 +105,15 @@ bool FyzikalnyObjekt::neznicitelny () const {
 double FyzikalnyObjekt::obsah () const {
   return PII*polomer*polomer;
 }
+void FyzikalnyObjekt::pohni () {
+  pozicia= pozicia + rychlost*DELTA_TIME;
+}
+void FyzikalnyObjekt::zrychli (Bod acc) {
+  rychlost= rychlost + acc*DELTA_TIME;
+}
+void FyzikalnyObjekt::okamziteZrychli (Bod acc) {
+  rychlost= rychlost + acc;
+}
 
 Vybuch::Vybuch () {}
 

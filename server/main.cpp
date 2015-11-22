@@ -95,13 +95,9 @@ int main(int argc, char *argv[]) {
     klient.posli(popisStavu.str().c_str());
   }
 
-  const long long ups = 100LL;   // updates per second
-  const long long fps = 25LL;    // frames per second
-  const long long delta_time = 1000LL / ups;
-  const long long frame_time = 1000LL / fps;
   ofstream observationstream((zaznamovyAdresar+"/observation").c_str());
   checkOstream(observationstream, zaznamovyAdresar+"/observation");
-  zapniObservation( &observationstream, int((frame_time+delta_time-1)/delta_time) );
+  zapniObservation( &observationstream, FRAME_TIME);
   observationstream << mapa.w << " " << mapa.h << "\n" << endl;
 
   //
@@ -159,12 +155,12 @@ int main(int argc, char *argv[]) {
 
     // pockame, aby sme dodrzovali zelane UPS
     long long current_time = gettime();
-    if (current_time < last_time + delta_time) {
-      long long remaining_ms = (last_time + delta_time) - current_time;
+    if (current_time < last_time + 1000LL*DELTA_TIME) {
+      long long remaining_ms = (last_time + 1000LL*DELTA_TIME) - current_time;
       usleep(remaining_ms * 1000LL);
     }
     last_time = gettime();
-    log("koniec tahu %d",stav.cas);
+    log("koniec, herny cas je %f",stav.cas);
   }
 
   // end step
