@@ -103,7 +103,7 @@ const static double k_zivoty[DRUHOV_PROJ]=
 const static double k_rychlost[DRUHOV_PROJ]= {200.0, 100.0};
 const static int k_nabojovNaZac[DRUHOV_ZBRANI]= {10,0,0};
 
-// ine parametre
+// ine konstanty
 #define INDESTRUCTIBLE  987654321ll
 #define DELTA_TIME 0.01
 #define FRAME_TIME 0.04
@@ -157,7 +157,6 @@ struct FyzikalnyObjekt {
 
   bool zije () const ;
   bool neznicitelny () const ;
-  double obsah () const ;
   void pohni () ;
   void zrychli (Bod acc) ;
   void okamziteZrychli (Bod acc) ;

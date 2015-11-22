@@ -24,6 +24,10 @@ static double casFrame;
 static double frame_t;
 static ostream* g_observation;
 
+const static int DX[4]={0,1,0,-1};
+const static int DY[4]={1,0,-1,0};
+
+
 void zapniObservation(ostream* observation, double ft) {
   g_observation = observation;
   frame_t = ft;
@@ -162,8 +166,6 @@ int konvertDoStavu (int typ) {
 }
 Bod nahodnyNaOkraji (int okraj,double polomer, const Mapa& mapa) {
   Bod kde(rand_float(mapa.w),rand_float(mapa.h));
-  int DX[4]={0,1,0,-1};
-  int DY[4]={1,0,-1,0};
   switch (DX[okraj]) {
     case 1: kde.x=mapa.w+polomer+SAFE_OD_OKRAJA; break;
     case -1: kde.x= -polomer-SAFE_OD_OKRAJA;
@@ -353,18 +355,16 @@ void udrz(FyzikalnyObjekt& obj, const Mapa& mapa) {
   // udrz objekty v hracom poli
   // aby platilo: kazdy objekt mimo mapy sa nevie hybat dalej od mapy
   //
-  int dx[4]={0,1,0,-1};
-  int dy[4]={1,0,-1,0};
   for (int smer=0; smer<4; smer++) {
     double x= obj.pozicia.x;
     double y= obj.pozicia.y;
-    switch (dx[smer]) {
-      case -1: x= -SENTINEL_POLOMER; break;
-      case 1: x=mapa.w+SENTINEL_POLOMER;
+    switch (DX[smer]) {
+      case 1: x=mapa.w+SENTINEL_POLOMER; break;
+      case -1: x= -SENTINEL_POLOMER;
     }
-    switch (dy[smer]) {
-      case -1: y= -SENTINEL_POLOMER; break;
-      case 1: y=mapa.h+SENTINEL_POLOMER;
+    switch (DY[smer]) {
+      case 1: y=mapa.h+SENTINEL_POLOMER; break;
+      case -1: y= -SENTINEL_POLOMER;
     }
     FyzikalnyObjekt sentinel(-1,-1,Bod(x,y),Bod(),SENTINEL_POLOMER,INF,SENTINEL_SILA,INF);
     Bod acc= odpal(obj,sentinel);
@@ -382,6 +382,9 @@ void pohniBossom(FyzikalnyObjekt& obj, Stav& stav) {
   Bod kam(obj.pozicia);
   double best= INF;
   for (int i=0; i<(int)stav.hraci.size(); i++) {
+    if (!stav.hraci[i].zije()) {
+      continue;
+    }
     Bod kde= stav.hraci[i].obj.pozicia;
     double vzdial= (kde-obj.pozicia).dist();
     if (vzdial < best) {
@@ -668,9 +671,9 @@ void vrhniAsteroid(Stav& stav, const Mapa& mapa) {
     int okraj= rand()%4;
     double polomer= rand_float(mapa.astMinR,mapa.astMaxR);
     Bod kde= nahodnyNaOkraji(okraj,polomer,mapa);
-    double uhol= rand_float(0.25*PII-okraj*0.5*PII, 0.75*PII-okraj*0.5*PII);
+    double uhol= rand_float(1.25*PII-okraj*0.5*PII, 1.75*PII-okraj*0.5*PII);
     double sila= rand_float(mapa.astMinVel,mapa.astMaxVel);
-    Bod rychl(sila*sin(uhol),sila*cos(uhol));
+    Bod rychl(sila*cos(uhol),sila*sin(uhol));
     stav.obj[ konvertDoStavu(ASTEROID) ].push_back(vytvorAst(kde,rychl,polomer));
   }
 }

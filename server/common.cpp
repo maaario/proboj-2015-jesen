@@ -65,19 +65,19 @@ double Bod::dist2() const {
   return x*x + y*y;
 }
 
-Bod Bod::operator*(Bod B) const { // A a B zacinaju v rovn. bode, kolmica z B na A tvori 2. bod vysl. vektoru
+Bod Bod::operator*(Bod B) const { // A a B zacinaju v rovn. bode, kolmica z A na B tvori 2. bod vysl. vektoru
   double skalarnySucin = x*B.x + y*B.y;
   double dlzka = skalarnySucin / B.dist();
   return B*(dlzka / B.dist());
 }
 
 double Bod::operator/(Bod B) const { // kolkonasobok B tvori so mnou pravouhly trojuholnik ?
+  if (B==Bod()) {
+    return 0;
+  }
   Bod temp = (*this)*B;
   if (B.x == 0) {
     return temp.y/B.y;
-  }
-  if (B.y == 0) {
-    return 0.0;
   }
   return temp.x/B.x;
 }
@@ -101,9 +101,6 @@ bool FyzikalnyObjekt::zije () const {
 }
 bool FyzikalnyObjekt::neznicitelny () const {
   return stit>0 || zivoty>INDESTRUCTIBLE;
-}
-double FyzikalnyObjekt::obsah () const {
-  return PII*polomer*polomer;
 }
 void FyzikalnyObjekt::pohni () {
   pozicia= pozicia + rychlost*DELTA_TIME;
