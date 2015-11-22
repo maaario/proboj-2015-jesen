@@ -7,8 +7,10 @@
 #include <fstream>
 #include <sstream>
 #include "SDL.h"
+#include "SDL_image.h"
 #include "SDL_ttf.h"
 #include "SDL_gfxPrimitives.h"
+#include "SDL_rotozoom.h"
 using namespace std;
 
 #include "logic.h"
@@ -21,6 +23,42 @@ template<class T> void checkStream(T& s, string filename) {
     fprintf(stderr, "neviem citat z %s\n", filename.c_str());
     exit(1);
   }
+}
+
+void Obrazky::nacitaj(string meno, string subor) {
+  SDL_Surface *surovy_obrazok = IMG_Load(subor.c_str());
+  if (surovy_obrazok == NULL) {
+    fprintf(stderr, "nepodarilo sa nacitat obrazok \"%s\"\n", subor.c_str());
+    exit(1);
+  }
+
+  SDL_Surface *konvertovany_obrazok = SDL_DisplayFormatAlpha(surovy_obrazok);
+  SDL_FreeSurface(surovy_obrazok);
+  if (konvertovany_obrazok == NULL) {
+    fprintf(stderr, "nepodarilo sa skonvertovat obrazok \"%s\"\n", subor.c_str());
+    exit(1);
+  }
+
+  obrazky[meno].push_back(konvertovany_obrazok);
+}
+
+void Obrazky::kresli(SDL_Surface *surface, string meno, int index, double x, double y, double polomer) {
+  int x_int = round(x - polomer);
+  int y_int = round(y - polomer);
+  int priemer_int = round(polomer);
+  SDL_Rect dstrect;
+  dstrect.x = x_int;
+  dstrect.y = y_int;
+  dstrect.w = priemer_int;
+  dstrect.h = priemer_int;
+
+  SDL_Surface *obrazok = obrazky[meno][index];
+
+  double pomer_x = 2 * (double)priemer_int / (double)obrazok->w;
+  double pomer_y = 2 * (double)priemer_int / (double)obrazok->h;
+  SDL_Surface *natiahnuty = zoomSurface(obrazok, pomer_x, pomer_y, SMOOTHING_OFF);
+  SDL_BlitSurface(natiahnuty, NULL, surface, &dstrect);
+  SDL_FreeSurface(natiahnuty);
 }
 
 void Hra::nacitajSubor(string zaznamovySubor) {
@@ -96,7 +134,7 @@ void kresliVec(SDL_Surface *surface, KruhovyObjekt &objekt) {
 // hlavna funkcia na nakreslenie vsetkeho
 //
 
-void Frame::kresli(SDL_Surface *surface) {
+void Frame::kresli(SDL_Surface *surface, Obrazky &obrazky) {
   for (KruhovyObjekt &objekt: kruhoveObjekty) {
     switch (objekt.typ) {
       case ASTEROID: {
