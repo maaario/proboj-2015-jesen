@@ -60,22 +60,21 @@ bool Bod::operator== (Bod iny) const {
 double Bod::dist() const {
   return sqrt(x*x + y*y);
 }
-
 double Bod::dist2() const {
   return x*x + y*y;
 }
 
-Bod Bod::operator*(Bod B) const { // A a B zacinaju v rovn. bode, kolmica z A na B tvori 2. bod vysl. vektoru
+Bod Bod::pata(Bod B) const { // ja a B zaciname v rovn. bode, kolmica z mna na B tvori 2. bod vysl. vektoru
+  if (B==Bod()) {
+    return Bod();
+  }
   double skalarnySucin = x*B.x + y*B.y;
   double dlzka = skalarnySucin / B.dist();
   return B*(dlzka / B.dist());
 }
 
 double Bod::operator/(Bod B) const { // kolkonasobok B tvori so mnou pravouhly trojuholnik ?
-  if (B==Bod()) {
-    return 0;
-  }
-  Bod temp = (*this)*B;
+  Bod temp = (*this).pata(B);
   if (B.x == 0) {
     return temp.y/B.y;
   }
@@ -102,11 +101,11 @@ bool FyzikalnyObjekt::zije () const {
 bool FyzikalnyObjekt::neznicitelny () const {
   return stit>0 || zivoty>INDESTRUCTIBLE;
 }
-void FyzikalnyObjekt::pohni () {
-  pozicia= pozicia + rychlost*DELTA_TIME;
+void FyzikalnyObjekt::pohni (double dt) {
+  pozicia= pozicia + rychlost*dt;
 }
-void FyzikalnyObjekt::zrychli (Bod acc) {
-  rychlost= rychlost + acc*DELTA_TIME;
+void FyzikalnyObjekt::zrychli (Bod acc, double dt) {
+  rychlost= rychlost + acc*dt;
 }
 void FyzikalnyObjekt::okamziteZrychli (Bod acc) {
   rychlost= rychlost + acc;
@@ -114,7 +113,7 @@ void FyzikalnyObjekt::okamziteZrychli (Bod acc) {
 
 Vybuch::Vybuch () {}
 
-Vybuch::Vybuch (int own,Bod kde,double r,double dmg,int f) :
+Vybuch::Vybuch (int own,Bod kde,double r,double dmg,double f) :
   owner(own), pozicia(kde), polomer(r), sila(dmg), faza(f)
 {
   id=volne_id;
@@ -133,12 +132,15 @@ bool Vec::zije () const {
 }
 
 
-Hrac::Hrac (Bod poz) : skore(0.0), cooldown(0), veci(DRUHOV_VECI,0)
+Hrac::Hrac (Bod poz) : skore(0.0), cooldown(0)
 {
   obj=FyzikalnyObjekt(LOD,volny_hrac, poz, Bod(), LOD_POLOMER, LOD_KOLIZNY_LV, LOD_SILA, LOD_ZIVOTY);
   volny_hrac++;
   for (int i=0; i<DRUHOV_ZBRANI; i++) {
-    zbrane.push_back(k_nabojovNaZac[i]);
+    zbrane.push_back(k_zbraniNaZac[i]);
+  }
+  for (int i=0; i<DRUHOV_VECI; i++) {
+    veci.push_back(k_veciNaZac[i]);
   }
 }
 Hrac::Hrac () {}

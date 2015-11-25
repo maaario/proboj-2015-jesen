@@ -10,7 +10,7 @@ naserveri: hrac
 klient.tar.gz:
 	tar czf $@ * $(addprefix --exclude=,$(CLEAN))
 
-hrac: main.o server_marshal.o server_common.o
+hrac: main.o server_marshal.o server_common.o server_update.o server_util.o
 	$(LINK.cpp) $^ $(LDLIBS) -o $@
 
 server_%.o: $(SERVERDIR)/%.cpp

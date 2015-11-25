@@ -18,7 +18,7 @@ class Klient {
     Klient(std::string _label, std::string adresar, std::string logAdresar);
     std::string getLabel();
     void spusti();
-    void restartuj(long long cas);
+    void restartuj(double cas);
     std::string citaj();
     void posli(std::string data);
     void zabi();

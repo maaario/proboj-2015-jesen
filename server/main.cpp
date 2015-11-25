@@ -124,12 +124,10 @@ int main(int argc, char *argv[]) {
 
       if (klient.nebezi()) {
         klient.restartuj(stav.cas);
-        /*
-        if (!klient.nebezi()) {
+        if (!klient.nebezi()) { // akosi moze zahltit cely server...
           klient.posli(popisMapy.str().c_str());
           klient.posli(popisStavu.str().c_str());
         }
-        */
         continue;
       }
       
@@ -152,7 +150,7 @@ int main(int argc, char *argv[]) {
       stav.hraci[0]=temp;
     }
 
-    odsimuluj(stav,akcie,mapa);
+    odsimuluj(stav,akcie,mapa,DELTA_TIME);
 
     //cleanup
     akcie.clear();

@@ -8,7 +8,7 @@ using namespace std;
 #include "klient.h"
 #include "util.h"
 
-#define MIN_CAS_RESTART 100ll
+#define MIN_CAS_RESTART 0.5
 
 Klient::Klient(string _label, string cwd, string zaznamovyAdresar) : label(_label), precitane("") {
   vector<string> command;
@@ -26,8 +26,8 @@ void Klient::spusti() {
   proces.restartuj();
 }
 
-void Klient::restartuj(long long cas) {
-  if (poslRestart== -1) {
+void Klient::restartuj(double cas) {
+  if (poslRestart< 0) {
     log("klient \"%s\": BSOD, restartujem...",label.c_str());
     poslRestart= cas;
     return;

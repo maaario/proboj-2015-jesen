@@ -57,7 +57,7 @@ const static double kBodyZnic[VSETKO_TYPOV] =
 #define AST_KOLIZNY_LV  10
 #define AST_SILA        0.05
 #define AST_ZIV_RATE    5.0
-#define AST_DROP_RATE   0.2
+#define AST_DROP_RATE   0.4
 #define AST_ROZPAD_ACC  50.0
 
 // parametre lode
@@ -72,8 +72,8 @@ const static double kBodyZnic[VSETKO_TYPOV] =
 #define VEC_KOLIZNY_LV  1
 #define VEC_SILA        0.0
 #define VEC_ZIVOTY      EPS
-const static int kV_nabojov[DRUHOV_ZBRANI+DRUHOV_VECI]=
-  {20,2,5, 2,2,2};
+const static int k_nabojov[DRUHOV_ZBRANI+DRUHOV_VECI]=
+  {INF,5,5, 2,2,2};
 #define URYCHLOVAC_SILA 100.0
 #define STIT_TRVANIE    1.0
 #define LEKARNICKA_SILA 0.5
@@ -83,29 +83,30 @@ const static int kV_nabojov[DRUHOV_ZBRANI+DRUHOV_VECI]=
 #define BOSS_KOLIZNY_LV 100
 #define BOSS_SILA       INF
 #define BOSS_ZIVOTY     INF
-#define BOSS_MAX_ACC    150.0
-#define BOSS_PERIODA    5.0
+#define BOSS_MAX_ACC    100.0
+#define BOSS_PERIODA    30.0
 
 // parametre sentinelu
 #define SENTINEL_SILA   0.05
 
 // parametre zbrani
-#define COOLDOWN        0.3
-#define LASER_SILA      0.5
+#define COOLDOWN        0.5
+#define LASER_SILA      5.0
 #define BUM_POLOMER     30.0
-#define BUM_SILA        2.0
+#define BUM_SILA        100.0
 #define BUM_TRVANIE     0.5
 const static double k_polomer[DRUHOV_PROJ]= {5.0, 6.0};
 const static int k_koliznyLv[DRUHOV_PROJ]= {5, 5};
-const static double k_sila[DRUHOV_PROJ]= {0.1, 0.0};
+const static double k_sila[DRUHOV_PROJ]= {0.1, EPS};
 const static double k_zivoty[DRUHOV_PROJ]=
   {EPS, EPS};
 const static double k_rychlost[DRUHOV_PROJ]= {200.0, 100.0};
-const static int k_nabojovNaZac[DRUHOV_ZBRANI]= {10,0,0};
+const static int k_zbraniNaZac[DRUHOV_ZBRANI]= {INF,0,0};
+const static int k_veciNaZac[DRUHOV_VECI]= {0,0,0};
 
 // ine konstanty
 #define INDESTRUCTIBLE  987654321ll
-#define DELTA_TIME 0.01
+#define DELTA_TIME 0.02
 #define FRAME_TIME 0.04
 
 
@@ -119,22 +120,21 @@ struct Bod {
   double x, y;
 
   Bod() ;
-
   Bod(double x, double y) ;
 
   Bod operator+(Bod iny) const ;
-
   Bod operator-(Bod iny) const ;
-
   Bod operator*(double k) const ;
 
   bool operator== (Bod iny) const ;
 
   double dist() const ;
   double dist2() const ;
-  Bod operator*(Bod B) const ;
+  
+  Bod pata(Bod B) const ;
   double operator/(Bod B) const ;
 };
+
 
 struct FyzikalnyObjekt {
   int typ;
@@ -157,8 +157,8 @@ struct FyzikalnyObjekt {
 
   bool zije () const ;
   bool neznicitelny () const ;
-  void pohni () ;
-  void zrychli (Bod acc) ;
+  void pohni (double dt) ;
+  void zrychli (Bod acc, double dt) ;
   void okamziteZrychli (Bod acc) ;
 };
 
@@ -171,7 +171,7 @@ struct Vybuch {
   double faza;
 
   Vybuch () ;
-  Vybuch (int own,Bod kde,double r,double dmg,int f) ;
+  Vybuch (int own,Bod kde,double r,double dmg,double f) ;
 };
 
 struct Vec {
