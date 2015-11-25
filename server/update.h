@@ -13,7 +13,7 @@ void vypis (const Stav& stav) ;
 
 double casDoZraz (Bod relpoz, Bod relvel, double polomer) ;
 
-void zoznamObjekty (Stav& stav, vector<FyzikalnyObjekt*>& objekty) ;
+void zoznamObjekty (Stav& stav, vector<FyzickyObjekt*>& objekty) ;
 
 void odsimuluj(Stav& stav, vector<Prikaz>& akcie,const Mapa& mapa, double dt);
 

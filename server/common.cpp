@@ -5,32 +5,6 @@
 static int volne_id=0;
 static int volny_hrac=0;
 
-int zbranNaVystrel (int zbran) {
-  switch (zbran) {
-    case VEC_PUSKA: return VYSTREL_PUSKA;
-    case VEC_BOMBA: return VYSTREL_BOMBA;
-    case VEC_LASER: return VYSTREL_LASER;
-  }
-  return -INF;
-}
-
-int vystrelNaProj (int vystrel) {
-  switch (vystrel) {
-    case VYSTREL_PUSKA: return BROK;
-    case VYSTREL_BOMBA: return BOMBA;
-  }
-  return -INF;
-}
-
-int vecNaPouzi (int vec) {
-  switch (vec) {
-    case VEC_URYCHLOVAC: return POUZI_URYCHLOVAC;
-    case VEC_STIT: return POUZI_STIT;
-    case VEC_LEKARNICKA: return POUZI_LEKARNICKA;
-  }
-  return -INF;
-}
-
 Bod::Bod() {
   this->x = 0;
   this->y = 0;
@@ -82,66 +56,36 @@ double Bod::operator/(Bod B) const { // kolkonasobok B tvori so mnou pravouhly t
 }
 
 
-FyzikalnyObjekt::FyzikalnyObjekt (int t,int own, Bod poz,Bod v,
-  double r, int coll, double pow,double hp) :
+FyzickyObjekt::FyzickyObjekt (int t,int own, Bod poz,Bod v,
+  double r, int koll, double pow,double hp) :
   typ(t), owner(own),
   pozicia(poz), rychlost(v), polomer(r),
-  koliznyLevel(coll),
-  sila(pow), zivoty(hp), stit(0)
+  koliznyLevel(koll),
+  sila(pow), zivoty(hp)
 {
   id=volne_id;
   volne_id++;
 }
 
-FyzikalnyObjekt::FyzikalnyObjekt () {}
+FyzickyObjekt::FyzickyObjekt () {}
 
-bool FyzikalnyObjekt::zije () const {
+bool FyzickyObjekt::zije () const {
   return zivoty > 0;
 }
-bool FyzikalnyObjekt::neznicitelny () const {
-  return stit>0 || zivoty>INDESTRUCTIBLE;
-}
-void FyzikalnyObjekt::pohni (double dt) {
+void FyzickyObjekt::pohni (double dt) {
   pozicia= pozicia + rychlost*dt;
 }
-void FyzikalnyObjekt::zrychli (Bod acc, double dt) {
+void FyzickyObjekt::zrychli (Bod acc, double dt) {
   rychlost= rychlost + acc*dt;
 }
-void FyzikalnyObjekt::okamziteZrychli (Bod acc) {
+void FyzickyObjekt::okamziteZrychli (Bod acc) {
   rychlost= rychlost + acc;
 }
 
-Vybuch::Vybuch () {}
-
-Vybuch::Vybuch (int own,Bod kde,double r,double dmg,double f) :
-  owner(own), pozicia(kde), polomer(r), sila(dmg), faza(f)
+Hrac::Hrac (Bod poz) : zasobnik(ZASOBNIK), zasobnikCooldown(DODAVACIA_DOBA), cooldown(0), skore(0)
 {
-  id=volne_id;
-  volne_id++;
-}
-
-
-Vec::Vec (Bod poz,int t,int ammo) : typ(t), naboje(ammo)
-{
-  obj= FyzikalnyObjekt(t,-1, poz, Bod(), VEC_POLOMER, VEC_KOLIZNY_LV, VEC_SILA, VEC_ZIVOTY);
-}
-Vec::Vec () {}
-
-bool Vec::zije () const {
-  return obj.zije();
-}
-
-
-Hrac::Hrac (Bod poz) : skore(0.0), cooldown(0)
-{
-  obj=FyzikalnyObjekt(LOD,volny_hrac, poz, Bod(), LOD_POLOMER, LOD_KOLIZNY_LV, LOD_SILA, LOD_ZIVOTY);
+  obj=FyzickyObjekt(LOD,volny_hrac, poz, Bod(), LOD_POLOMER, LOD_KOLIZNY_LV, LOD_SILA, LOD_ZIVOTY);
   volny_hrac++;
-  for (int i=0; i<DRUHOV_ZBRANI; i++) {
-    zbrane.push_back(k_zbraniNaZac[i]);
-  }
-  for (int i=0; i<DRUHOV_VECI; i++) {
-    veci.push_back(k_veciNaZac[i]);
-  }
 }
 Hrac::Hrac () {}
 
@@ -150,12 +94,12 @@ bool Hrac::zije () const {
 }
 
 
-Prikaz::Prikaz () : acc(Bod()), ciel(Bod()), pal(-1), pouzi(DRUHOV_VECI) {}
+Prikaz::Prikaz () : acc(Bod()), ciel(Bod()) {}
 
 
 Mapa::Mapa (double sirka,double vyska) :
   w(sirka), h(vyska) {}
-  
+
 Mapa::Mapa () : w(-1), h(-1) {}
 
 
