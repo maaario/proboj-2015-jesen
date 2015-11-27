@@ -11,23 +11,28 @@ using namespace std;
 #define EPS 0.0000000001
 #define PII 3.14159265358979323846
 
-#define LOD       5
 #define ASTEROID  0
 #define PLANETA   1
 #define BOSS      2
 #define STRELA    3
 #define ZLATO     4
-const static double kBodyZnic[]={1,INF,INF,0,0,50};
+#define LOD       5
+const static double kBodyZnic[]={1,INF,INF,0,0,50}; // ziskane body za znicenie daneho objektu
 
-#define POC_TYPOV 5
+#define NORM_TYPOV 5
 
 // parametre asteroidu
-#define AST_MIN_R       7.0
+#define AST_MIN_R       7.0 // minimalny polomer asteroidu po rozpade
 #define AST_KOLIZNY_LV  10
 #define AST_SILA        0.05
 #define AST_ZIV_RATE    10.0
 #define AST_DROP_RATE   0.4
 #define AST_ROZPAD_ACC  50.0
+
+// parametre planet
+#define PLANETA_KOLIZNY_LV  100
+#define PLANETA_SILA        0.05
+#define PLANETA_ZIV_RATE    INF
 
 // parametre lode
 #define LOD_POLOMER     10.0
@@ -46,7 +51,7 @@ const static double kBodyZnic[]={1,INF,INF,0,0,50};
 // parametre bossa
 #define BOSS_POLOMER    20.0
 #define BOSS_KOLIZNY_LV 100
-#define BOSS_SILA       INF
+#define BOSS_SILA       99999.9
 #define BOSS_ZIVOTY     INF
 #define BOSS_MAX_ACC    100.0
 #define BOSS_PERIODA    30.0
@@ -83,8 +88,8 @@ struct Bod {
   double dist() const ;
   double dist2() const ;
   
-  Bod pata(Bod B) const ;
-  double operator/(Bod B) const ;
+  Bod pata(Bod B) const ; // A.pata(B) == spojnica (0,0) a paty z A na vektor B
+  double operator/(Bod B) const ; // A/B == kolkonasobok B tvori spolu s A pravouhly trojuholnik?
 };
 
 
@@ -96,13 +101,22 @@ struct FyzickyObjekt {
   Bod pozicia;
   Bod rychlost;
   double polomer;
-
-  int koliznyLevel;
-
   double sila;
   double zivoty;
 
-  FyzickyObjekt (int t,int own, Bod poz,Bod v,double r, int koll, double pow,double hp) ;
+  int koliznyLevel;
+
+  // kolizny_lv == Ak 2 objekty koliduju, tak
+  // ak maju rovnaky kolizny_lv, tak sa obe odrazia
+  // inak sa odrazi iba ten s nizsim koliznym_lv (ale viac)
+
+  // sila == zhruba ake velke zranenie dostane objekt, ktory do mna vrazi
+  // presne mnozstvo zranenia zavisi od toho, ake velke okamzite zrychlenie
+  // ta zrazka sposobi
+
+  // zivoty == ak su <=0, tak objekt umiera
+
+  FyzickyObjekt (int t,int own, Bod poz,Bod v,double r, double pow,double hp, int koll) ;
   FyzickyObjekt () ;
 
   bool zije () const ;
@@ -117,6 +131,11 @@ struct Hrac {
   double zasobnikCooldown;
   double cooldown;
   double skore;
+
+  // kazdy hrac ma zasobnik 5 striel
+  // dobijacia doba je DODAVACIA_DOBA sekund (ale dobija sa len ked zasobnik nie je plny),
+  // zost. cas je v premennej zasobnikCooldown
+  // medzi dvoma strelami hraca je aspon COOLDOWN sekund (zostavajuci cas je v premennej cooldown)
 
   Hrac (Bod poz) ;
   Hrac () ;
@@ -136,23 +155,24 @@ struct Prikaz {
 
 struct Mapa {
   double w,h;
-  double casAst;
-  double casBoss;
-  double astMinR, astMaxR;
-  double astMinVel, astMaxVel;
-  vector<Bod> spawny;
-  vector<FyzickyObjekt> objekty;
+  double casAst; // ako casto sa v mape vynaraju z okraja asteroidy
+  double casBoss; // kedy najskor pride boss
+  double astMinR, astMaxR; // minimalny a maximalny mozny polomer vynarajuceho sa asteroidu
+  double astMinVel, astMaxVel; // min. a max. mozna rychlost vynarajuceho sa asteroidu
+  vector<Bod> spawny; // mozne pociatocne pozicie hracov
+  vector<FyzickyObjekt> objekty; // obsahuje vsetky objekty, ktore su na mape umiestnene na zaciatku
 
   Mapa (double sirka,double vyska) ;
   Mapa () ;
 };
 
 struct Stav {
-  double cas;
-  double casAst;
-  double casBoss;
-  vector<FyzickyObjekt> obj[POC_TYPOV];
-  vector<Hrac> hraci;
+  double cas; // ako dlho hra uz trva
+  double casAst; // cas do prichodu dalsieho asteroidu z okraja mapy
+  double casBoss; // cas do prichodu bossa
+  vector<FyzickyObjekt> obj[NORM_TYPOV]; // obsahuje objekty daneho typu
+  // typy su ASTEROID, PLANETA, BOSS, STRELA
+  vector<Hrac> hraci; // obsahuje udaje a objekty (vesmirne lode) hracov
 
   Stav () ;
 

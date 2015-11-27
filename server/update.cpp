@@ -66,7 +66,7 @@ void zazrel(FyzickyObjekt& obj) {
   }
 }
 void zaznamuj(Stav& stav) {
-  for (int t=0; t<POC_TYPOV; t++) {
+  for (int t=0; t<NORM_TYPOV; t++) {
     for (FyzickyObjekt& obj : stav.obj[t]) {
       zazrel(obj);
     }
@@ -86,8 +86,7 @@ void vypis(const Stav& stav) {
   for (const Hrac& hrac : stav.hraci) {
     // owner, skore, zivoty, zasobnik, zasobnikCooldown, cooldown
     *g_observation << hrac.obj.owner << " " << hrac.skore << " "
-      << hrac.obj.zivoty << " " << hrac.zasobnik << " " << hrac.zasobnikCooldown
-      << " " << hrac.cooldown << "\n";
+      << hrac.obj.zivoty << " " << hrac.zasobnik << "\n";
   }
   for (pair<const int,obraz>& parik : vidim) {
     obraz* ptr= &parik.second;
@@ -193,13 +192,13 @@ Bod odpal (const FyzickyObjekt& A, const FyzickyObjekt& B) {
 
 
 FyzickyObjekt vytvorVec(Bod poz,Bod rychl) {
-  FyzickyObjekt res(ZLATO,-1, poz,rychl,ZLATO_POLOMER, ZLATO_KOLIZNY_LV, ZLATO_SILA, ZLATO_ZIVOTY);
+  FyzickyObjekt res(ZLATO,-1, poz,rychl,ZLATO_POLOMER, ZLATO_SILA, ZLATO_ZIVOTY,ZLATO_KOLIZNY_LV);
   return res;
 }
 
 FyzickyObjekt vytvorAst(Bod poz,Bod rychl, double r) {
   double zivoty= AST_ZIV_RATE*r*r;
-  FyzickyObjekt res(ASTEROID,-1, poz,rychl,r, AST_KOLIZNY_LV, AST_SILA, zivoty);
+  FyzickyObjekt res(ASTEROID,-1, poz,rychl,r, AST_SILA, zivoty,AST_KOLIZNY_LV);
   return res;
 }
 
@@ -253,9 +252,12 @@ void rozpad(const FyzickyObjekt& obj, vector<FyzickyObjekt>& vznikleObjekty) {
   for (int i=0; i<(int)pozy.size(); i++) {
     Bod poz= pozy[i].second;
     double acc= rand_float(AST_ROZPAD_ACC);
+    /*
     double uhol= rand_float(2.0*PII);
     Bod rychl(acc*sin(uhol),acc*cos(uhol));
-
+    */
+    Bod rychl= poz-obj.pozicia;
+    rychl= rychl*(acc/rychl.dist());
     bool jeVec= pozy[i].first;
     if (jeVec) {
       vznikleObjekty.push_back(vytvorVec(poz,rychl));
@@ -311,7 +313,7 @@ void udrz(FyzickyObjekt& obj, const Mapa& mapa) {
       case 1: y=mapa.h+SENTINEL_POLOMER; break;
       case -1: y= -SENTINEL_POLOMER;
     }
-    FyzickyObjekt sentinel(-1,-1,Bod(x,y),Bod(),SENTINEL_POLOMER,INF,SENTINEL_SILA,INF);
+    FyzickyObjekt sentinel(-1,-1,Bod(x,y),Bod(),SENTINEL_POLOMER,SENTINEL_SILA,INF,INF);
     Bod acc= odpal(obj,sentinel);
     obj.okamziteZrychli(acc);
     obj.zivoty -= sentinel.sila*acc.dist();
@@ -355,7 +357,7 @@ void pohniBossom(FyzickyObjekt& obj, Stav& stav) {
 }
 
 void zoznamObjekty(Stav& stav, vector<FyzickyObjekt*>& objekty) {
-  for (int t=0; t<POC_TYPOV; t++) {
+  for (int t=0; t<NORM_TYPOV; t++) {
     for (FyzickyObjekt& obj : stav.obj[t]) {
       objekty.push_back(&obj);
     }
@@ -443,7 +445,7 @@ void vypalZoZbrane(Stav& stav,const vector<Prikaz>& akcie,const Mapa& mapa) {
 
     smer=smer*(STRELA_RYCHLOST/smer.dist());
     Bod p_rychl= rychl+smer;
-    FyzickyObjekt strela(STRELA,owner, spawn,p_rychl, STRELA_POLOMER, STRELA_KOLIZNY_LV, STRELA_SILA, STRELA_ZIVOTY);
+    FyzickyObjekt strela(STRELA,owner, spawn,p_rychl, STRELA_POLOMER, STRELA_SILA, STRELA_ZIVOTY,STRELA_KOLIZNY_LV);
     udrz(strela,mapa);
     stav.obj[STRELA].push_back(strela);
     stav.hraci[i].cooldown= COOLDOWN;
@@ -502,7 +504,7 @@ void pohrebnaSluzba(Stav& stav) {
   // asteroidy, planety, hviezdy, bossov, PROJ_BEGINy, veci
   //
   vector<FyzickyObjekt> vznikleObjekty;
-  for (int t=0; t<POC_TYPOV; t++) {
+  for (int t=0; t<NORM_TYPOV; t++) {
     for (int i=(int)stav.obj[t].size()-1; i>=0; i--) {
       if (stav.obj[t][i].zije()) {
         continue;
@@ -538,8 +540,7 @@ void zavolajBossa(Stav& stav, const Mapa& mapa) {
     stav.casBoss= BOSS_PERIODA;
     int okraj= rand()%4;
     Bod spawn= nahodnyNaOkraji(okraj,BOSS_POLOMER,mapa);
-    FyzickyObjekt boss(BOSS,-1, spawn,Bod(),BOSS_POLOMER,BOSS_KOLIZNY_LV,
-      BOSS_SILA,BOSS_ZIVOTY);
+    FyzickyObjekt boss(BOSS,-1, spawn,Bod(),BOSS_POLOMER,BOSS_SILA,BOSS_ZIVOTY,BOSS_KOLIZNY_LV);
     stav.obj[BOSS].push_back(boss);
   }
 }
@@ -575,9 +576,7 @@ void odsimuluj(Stav& stav, vector<Prikaz>& akcie, const Mapa& mapa, double dt) {
 
 
 
-bool validvMape (int typ) {
-  return typ!=LOD && typ!=STRELA;
-}
+
 
 bool pociatocnyStav(Mapa& mapa, Stav& stav, int pocKlientov) {
   stav.cas = 0.0;
@@ -597,11 +596,9 @@ bool pociatocnyStav(Mapa& mapa, Stav& stav, int pocKlientov) {
 
   for (int i=0; i<(int)mapa.objekty.size(); i++) {
     int typ = mapa.objekty[i].typ;
-    if (!validvMape(typ) ) {
-      log("neznamy objekt vo vesmire");
-      return false;
-    }
-    stav.obj[typ].push_back( mapa.objekty[i] );
+    FyzickyObjekt K= mapa.objekty[i];
+    FyzickyObjekt obj(K.typ,K.owner,K.pozicia,K.rychlost,K.polomer,K.sila,K.zivoty,K.koliznyLevel); //treba nastavit korektne id
+    stav.obj[typ].push_back(obj);
   }
   mapa.objekty.clear();
 

@@ -57,11 +57,11 @@ double Bod::operator/(Bod B) const { // kolkonasobok B tvori so mnou pravouhly t
 
 
 FyzickyObjekt::FyzickyObjekt (int t,int own, Bod poz,Bod v,
-  double r, int koll, double pow,double hp) :
+  double r, double pow,double hp, int koll) :
   typ(t), owner(own),
   pozicia(poz), rychlost(v), polomer(r),
-  koliznyLevel(koll),
-  sila(pow), zivoty(hp)
+  sila(pow), zivoty(hp),
+  koliznyLevel(koll)
 {
   id=volne_id;
   volne_id++;
@@ -84,7 +84,7 @@ void FyzickyObjekt::okamziteZrychli (Bod acc) {
 
 Hrac::Hrac (Bod poz) : zasobnik(ZASOBNIK), zasobnikCooldown(DODAVACIA_DOBA), cooldown(0), skore(0)
 {
-  obj=FyzickyObjekt(LOD,volny_hrac, poz, Bod(), LOD_POLOMER, LOD_KOLIZNY_LV, LOD_SILA, LOD_ZIVOTY);
+  obj=FyzickyObjekt(LOD,volny_hrac, poz, Bod(), LOD_POLOMER, LOD_SILA, LOD_ZIVOTY,LOD_KOLIZNY_LV);
   volny_hrac++;
 }
 Hrac::Hrac () {}
