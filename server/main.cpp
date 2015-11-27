@@ -77,7 +77,20 @@ int main(int argc, char *argv[]) {
   for (int i = 0; i < (int)klientskeAdresare.size(); ++i) {
     klienti.push_back(Klient(itos(i), klientskeAdresare[i], zaznamovyAdresar));
   }
-  random_shuffle(klienti.begin(),klienti.end());
+  
+  vector<int> poradie(klienti.size()); // kolkaty ide ten hrac?
+  for (int i=0; i<(int)klienti.size(); i++) {
+    poradie[i]=i;
+  }
+  random_shuffle(poradie.begin(),poradie.end());
+  {
+    vector<Klient> klientiPerm(klienti.size());
+    for (int i=0; i<(int)klienti.size(); i++) {
+      int kde= poradie[i];
+      klientiPerm[kde]= klienti[i];
+    }
+    klienti.swap(klientiPerm);
+  }
 
   // zostroj pociatocny stav
   Stav stav;
@@ -112,7 +125,7 @@ int main(int argc, char *argv[]) {
 
   vector<Prikaz> akcie;
 
-  while (stav.zivychHracov() ) {
+  while (stav.zivychHracov() > 1) {
 
     for (Klient &klient: klienti) {
       int kolkaty = akcie.size();
@@ -139,7 +152,6 @@ int main(int argc, char *argv[]) {
       buf << odpoved;
       nacitaj(buf,akcie[kolkaty]);
 
-      //log("klient \"%s\" napisal: %s", klient.getLabel().c_str(),odpoved.c_str());
       Hrac temp= stav.hraci[0];
       stav.hraci[0]= stav.hraci[kolkaty];
       stav.hraci[kolkaty]= temp;
@@ -175,9 +187,13 @@ int main(int argc, char *argv[]) {
     vysledky.push_back(hrac.skore);
   }
   ofstream rankstream((zaznamovyAdresar+"/rank").c_str());
-  checkOstream(rankstream, zaznamovyAdresar+"/rank");
-  uloz(rankstream,vysledky);
+  rankstream << klienti.size() << "\n";
+  for (int i=0; i<(int)klienti.size(); i++) {
+    int kde= poradie[i];
+    rankstream << vysledky[kde] << "\n";
+  }
   rankstream.close();
+  checkOstream(rankstream, zaznamovyAdresar+"/rank");
   
   log("ukoncujeme klientov");
   zabiKlientov();

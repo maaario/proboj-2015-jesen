@@ -17,7 +17,10 @@ using namespace std;
 #define STRELA    3
 #define ZLATO     4
 #define LOD       5
-const static double kBodyZnic[]={1,INF,INF,0,0,50}; // ziskane body za znicenie daneho objektu
+
+// bodovanie
+#define SKORE_ZA_PREZITIE  50
+const static double kSkoreZnic[]={1,INF,INF,0,0,50}; // ziskane body za znicenie daneho objektu
 
 #define NORM_TYPOV 5
 
@@ -25,9 +28,9 @@ const static double kBodyZnic[]={1,INF,INF,0,0,50}; // ziskane body za znicenie 
 #define AST_MIN_R       7.0 // minimalny polomer asteroidu po rozpade
 #define AST_KOLIZNY_LV  10
 #define AST_SILA        0.05
-#define AST_ZIV_RATE    10.0
+#define AST_ZIV_RATE    1.0
 #define AST_DROP_RATE   0.4
-#define AST_ROZPAD_ACC  50.0
+#define AST_ROZPAD_ACC  30.0
 
 // parametre planet
 #define PLANETA_KOLIZNY_LV  100
@@ -46,7 +49,7 @@ const static double kBodyZnic[]={1,INF,INF,0,0,50}; // ziskane body za znicenie 
 #define ZLATO_POLOMER     6.0
 #define ZLATO_KOLIZNY_LV  1
 #define ZLATO_SILA        0.0
-#define ZLATO_ZIVOTY      EPS
+#define ZLATO_ZIVOTY      10.0
 
 // parametre bossa
 #define BOSS_POLOMER    20.0

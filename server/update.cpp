@@ -13,7 +13,7 @@ using namespace std;
 #include "update.h"
 #include "util.h"
 
-#define PRESNOST 21
+#define PRESNOST 1000
 #define RANDF_ACC 98765ll
 #define SENTINEL_POLOMER 987654.0
 #define SAFE_OD_OKRAJA 20.0
@@ -72,14 +72,14 @@ void zaznamuj(Stav& stav) {
     }
   }
   for (Hrac& hrac : stav.hraci) {
-    if (!hrac.zije()) {
+    if (hrac.obj.zivoty <= -INF) {
       continue;
     }
     zazrel(hrac.obj);
   }
 }
 void vypis(const Stav& stav) {
-  if (vidim.empty()) {
+  if (vidim.size() == 0) {
     return;
   }
   *g_observation << stav.hraci.size() << "\n";
@@ -258,6 +258,7 @@ void rozpad(const FyzickyObjekt& obj, vector<FyzickyObjekt>& vznikleObjekty) {
     */
     Bod rychl= poz-obj.pozicia;
     rychl= rychl*(acc/rychl.dist());
+    rychl= obj.rychlost+rychl;
     bool jeVec= pozy[i].first;
     if (jeVec) {
       vznikleObjekty.push_back(vytvorVec(poz,rychl));
@@ -324,32 +325,40 @@ void pohniBossom(FyzickyObjekt& obj, Stav& stav) {
   // so far, bossovia su indestructible
   // aby sa mohli hybat hlupo (burat do hviezd)
   //
-  Bod kam(obj.pozicia);
+  Bod kam;
   double best= INF;
   for (int i=0; i<(int)stav.hraci.size(); i++) {
     if (!stav.hraci[i].zije()) {
       continue;
     }
-    double l=0;
-    double r=INF;
-    Bod smer;
-    while (r-l > EPS) {
-      double s=(l+r)/2;
-      Bod on= stav.hraci[i].obj.pozicia + stav.hraci[i].obj.rychlost*s;
-      Bod ja= obj.pozicia + obj.rychlost*s;
-      Bod relpoz= on-ja;
-      double cas= sqrt(2*relpoz.dist()/BOSS_MAX_ACC);
-      if (cas < s) {
-        r=s;
-        smer= relpoz;
+    Bod relpoz= stav.hraci[i].obj.pozicia - obj.pozicia;
+    Bod relvel= obj.rychlost - stav.hraci[i].obj.rychlost;
+    Bod pata= relpoz.pata(relvel);
+    double dolina= pata/relvel;
+    double L[2]={ max(0.0,dolina), 0 };
+    double R[2]={ INF, dolina };
+    for (int t=0; t<2; t++) {
+      double l= L[t];
+      double r= R[t];
+      bool vyhovuje=false;
+      Bod smer;
+      while (r-l > EPS) {
+        double s=(l+r)/2;
+        Bod kde= relpoz + relvel*s;
+        double cas= sqrt(2*kde.dist()/BOSS_MAX_ACC);
+        if (cas < s) {
+          vyhovuje=true;
+          r=s;
+          smer= relpoz;
+        }
+        else {
+          l=s;
+        }
       }
-      else {
-        l=s;
+      if (r < best && vyhovuje) {
+        best=r;
+        kam= smer;
       }
-    }
-    if (r < best) {
-      best=r;
-      kam= smer;
     }
   }
   kam= kam*(BOSS_MAX_ACC/kam.dist());
@@ -389,7 +398,7 @@ void okamzityEfekt(Stav& stav,const Mapa& mapa) {
   for (FyzickyObjekt* prvy : objekty) {
     vector<bool> trafil(stav.hraci.size(),false);
     for (FyzickyObjekt* druhy : stare) {
-      if (prvy->id == druhy->id) {
+      if (!zrazka(*prvy,*druhy) || prvy->id == druhy->id) {
         continue;
       }
       Bod acc = odpal(*prvy, *druhy);
@@ -413,10 +422,10 @@ void okamzityEfekt(Stav& stav,const Mapa& mapa) {
         continue;
       }
       if (j == prvy->owner) {
-        stav.hraci[j].skore-= kBodyZnic[prvy->typ];
+        stav.hraci[j].skore-= kSkoreZnic[prvy->typ];
       }
       else {
-        stav.hraci[j].skore+= kBodyZnic[prvy->typ];
+        stav.hraci[j].skore+= kSkoreZnic[prvy->typ];
       }
     }
   }
@@ -464,6 +473,7 @@ void ziskajPickupy(Stav& stav) {
         continue;
       }
       hrac.skore+= ZLATO_HODNOTA;
+      bonus.zivoty= -INF;
     }
   }
 }
@@ -479,6 +489,13 @@ void pohniObjektami(Stav& stav) {
 void endStep(Stav& stav) {
   // end step
   //
+  if (stav.zivychHracov() <= 1) {
+    for (Hrac& hrac : stav.hraci) {
+      if (hrac.zije()) {
+        hrac.skore+= SKORE_ZA_PREZITIE;
+      }
+    }
+  }
   for (Hrac& hrac : stav.hraci) {
     if (!hrac.zije()) {
       continue;
@@ -514,6 +531,12 @@ void pohrebnaSluzba(Stav& stav) {
       stav.obj[t].pop_back();
     }
   }
+  for (Hrac& hrac : stav.hraci) {
+    if (hrac.zije()) {
+      continue;
+    }
+    hrac.obj.zivoty= -INF;
+  }
   for (FyzickyObjekt& obj : vznikleObjekty) {
     int t= obj.typ;
     stav.obj[t].push_back(obj);
@@ -547,10 +570,10 @@ void zavolajBossa(Stav& stav, const Mapa& mapa) {
 
 
 void odsimuluj(Stav& stav, vector<Prikaz>& akcie, const Mapa& mapa, double dt) {
-  // axiomy:
-  // kazdy objekt musi byt zivy aspon 1 jednotku casu
-  // vznikajuce objekty ovplyvnuju a su ovplyvnovane az nasledujucim stavom
-  // laser nie je vznikajuci objekt, ten ovplyvnuje aktualny stav
+  // odsimuluje 1 krok hry na cas dt (cim vacsi cas, tym mensia presnost !!!)
+  // ==> odsimulovat ten isty cas na viac krokov je presnejsie
+  //
+
   delta_time = dt;
 
   opravPrikazy(stav,akcie);

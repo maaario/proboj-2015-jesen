@@ -10,6 +10,8 @@ using namespace std;
 
 #define MIN_CAS_RESTART 0.5
 
+Klient::Klient() : label(""), precitane("") {}
+
 Klient::Klient(string _label, string cwd, string zaznamovyAdresar) : label(_label), precitane("") {
   vector<string> command;
   command.push_back("./hrac");

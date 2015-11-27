@@ -15,6 +15,7 @@ class Klient {
     long long poslRestart;
     
   public:
+    Klient();
     Klient(std::string _label, std::string adresar, std::string logAdresar);
     std::string getLabel();
     void spusti();
