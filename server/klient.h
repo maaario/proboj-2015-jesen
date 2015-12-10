@@ -12,7 +12,7 @@ class Klient {
     Proces proces;
     std::string precitane;
     
-    long long poslRestart;
+    double poslRestart;
     
   public:
     Klient();

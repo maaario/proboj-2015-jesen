@@ -6,6 +6,7 @@ using namespace std;
 #include "common.h"
 #include "marshal.h"
 #include "util.h"
+#include "update.h"
 
 fstream in;
 

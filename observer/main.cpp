@@ -12,11 +12,14 @@ using namespace std;
 #include "logic.h"
 
 #define FPS 30
+#define TIMEOUT 5.0
 
 #define RYCHLOST_KAMERY 1000
 #define RYCHLOST_ZOOMU  2.0
+#define MIN_ZOOM        0.01
+#define MAX_ZOOM        7.0
 
-#define FARBA_POZADIA   0x101010
+#define FARBA_POZADIA   0x202020
 
 int main(int argc, char *argv[]) {
   if (argc != 2 || argv[1][0] == '-') {
@@ -39,20 +42,25 @@ int main(int argc, char *argv[]) {
   IMG_Init(IMG_INIT_PNG);
   atexit(IMG_Quit);
 
-  SDL_Surface *screen = SDL_SetVideoMode(hra.sirka, hra.vyska, 32, SDL_SWSURFACE);
+  SDL_Surface *screen = SDL_SetVideoMode(1200, 800, 32, SDL_SWSURFACE);
 
   string title = string("Observer - ") + argv[1];
   SDL_WM_SetCaption(title.c_str(), title.c_str());
 
-  Obrazky obrazky;
-  obrazky.nacitaj("avatar", "observer/obrazky/avatar.png");
+  TTF_Font *font = TTF_OpenFont("observer/FreeSansBold.ttf", 16);
 
-  Kamera kamera(Bod(hra.sirka / 2, hra.vyska / 2), 1.0);
+  Obrazky obrazky;
+  obrazky.nacitaj("asteroid", "observer/obrazky/asteroid.png");
+  obrazky.nacitaj("earth", "observer/obrazky/earth.png");
+  obrazky.nacitaj("troll", "observer/obrazky/trollface.png");
+
+  Kamera kamera(Bod(hra.sirka / 2, hra.vyska / 2), min(0.7 * screen->w / hra.sirka, 0.7 * screen->h / hra.vyska));
   Bod pohybKamery(0, 0);
   int zoomKamery = 0;
 
   double cas = 0.0;   // na ktorom ticku hry sme, samozrejme az po zaokruhleni
   double rychlost = 1.0;
+  double timeout = 0.0;
   bool pauza = false;
 
   while (true) {
@@ -142,22 +150,32 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    kamera.pozicia = kamera.pozicia + pohybKamery * (1.0 / FPS);
+    kamera.pozicia = kamera.pozicia + pohybKamery * (1.0 / kamera.zoom) * (1.0 / FPS);
     kamera.zoom *= 1.0 + RYCHLOST_ZOOMU * zoomKamery * (1.0 / FPS);
+    if (kamera.zoom < MIN_ZOOM) kamera.zoom = MIN_ZOOM;
+    if (kamera.zoom > MAX_ZOOM) kamera.zoom = MAX_ZOOM;
 
     if (!pauza) cas += rychlost;
     if (cas < 0) cas = 0;
-    if (cas >= hra.framy.size()) cas = hra.framy.size() - 1;
+    if (cas >= hra.framy.size()) {
+      cas = hra.framy.size() - 1;
+      timeout += 1.0 / FPS;
+    } else {
+      timeout = 0.0;
+    }
+    if (timeout >= TIMEOUT) {
+      return 0;
+    }
 
     int tick = floor(cas);
 
     SDL_FillRect(screen, &screen->clip_rect, FARBA_POZADIA);    // vycistime obrazovku
 
-    hra.framy[tick].kresli(screen, kamera, obrazky);            // nakreslime sucasny stav
+    hra.framy[tick].kresli(screen, kamera, obrazky, font);      // nakreslime sucasny stav
 
     SDL_Flip(screen);                                           // zobrazime, co sme nakreslili, na obrazovku
 
     int pocetTickovNaKonci = SDL_GetTicks();
-    SDL_Delay(1000 / FPS - (pocetTickovNaKonci - pocetTickovNaZaciatku));
+    SDL_Delay(max(1, 1000 / FPS - (pocetTickovNaKonci - pocetTickovNaZaciatku)));
   }
 }

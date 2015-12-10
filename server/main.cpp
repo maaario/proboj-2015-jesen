@@ -9,6 +9,7 @@
 #include <sstream>
 #include <fstream>
 #include <algorithm>
+#include <unordered_map>
 using namespace std;
 
 #include "util.h"
@@ -70,12 +71,40 @@ int main(int argc, char *argv[]) {
   }
 
   // nacitame klientov
+  unordered_map<string,int> pocty;
   vector<string> klientskeAdresare;
   for (int i = 3; i < argc; ++i) {
     klientskeAdresare.push_back(string(argv[i]));
   }
   for (int i = 0; i < (int)klientskeAdresare.size(); ++i) {
-    klienti.push_back(Klient(itos(i), klientskeAdresare[i], zaznamovyAdresar));
+    string meno;
+    {
+      string adresa= klientskeAdresare[i];
+      int j=adresa.size()-1;
+      int poslednelomitko= adresa.size();
+      while (j>=0 && (adresa[j]=='-' || adresa[j]=='/' || (adresa[j]>='0' && adresa[j]<='9')) ) {
+				if (adresa[j]=='/') {
+					poslednelomitko=j;
+				}
+				j--;
+			}
+			j= poslednelomitko-1;
+      while (j>=0 && adresa[j]!='/') {
+        meno+= adresa[j];
+        j--;
+      }
+    }
+    reverse(meno.begin(),meno.end());
+    if (pocty.count(meno)) {
+      int kolkaty= pocty[meno];
+      pocty[meno]++;
+      meno+= itos(kolkaty);
+    }
+    else {
+			pocty[meno]=1;
+			meno+= '0';
+		}
+    klienti.push_back(Klient(meno, klientskeAdresare[i], zaznamovyAdresar));
   }
   
   vector<int> poradie(klienti.size()); // kolkaty ide ten hrac?
@@ -190,7 +219,7 @@ int main(int argc, char *argv[]) {
   rankstream << klienti.size() << "\n";
   for (int i=0; i<(int)klienti.size(); i++) {
     int kde= poradie[i];
-    rankstream << vysledky[kde] << "\n";
+    rankstream << int(vysledky[kde]) << "\n";
   }
   rankstream.close();
   checkOstream(rankstream, zaznamovyAdresar+"/rank");

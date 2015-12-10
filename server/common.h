@@ -18,46 +18,35 @@ using namespace std;
 #define ZLATO     4
 #define LOD       5
 
-// bodovanie
-#define SKORE_ZA_PREZITIE  50
-const static double kSkoreZnic[]={1,INF,INF,0,0,50}; // ziskane body za znicenie daneho objektu
-
 #define NORM_TYPOV 5
 
+// bodovanie
+#define SKORE_ZA_PREZITIE  100
+const static double kSkoreUber[]={0,0,0,0,0,0.2};
+const static double kSkoreZnic[]={1,INF,INF,0,0,50}; // ziskane body za znicenie daneho objektu
+
 // parametre asteroidu
-#define AST_MIN_R       7.0 // minimalny polomer asteroidu po rozpade
-#define AST_KOLIZNY_LV  10
 #define AST_SILA        0.05
-#define AST_ZIV_RATE    1.0
-#define AST_DROP_RATE   0.4
-#define AST_ROZPAD_ACC  30.0
 
 // parametre planet
-#define PLANETA_KOLIZNY_LV  100
 #define PLANETA_SILA        0.05
-#define PLANETA_ZIV_RATE    INF
 
 // parametre lode
-#define LOD_POLOMER     10.0
 #define LOD_KOLIZNY_LV  10
-#define LOD_SILA        1.0
-#define LOD_ZIVOTY      100.0
-#define LOD_MAX_ACC     100.0
+#define LOD_ZIVOTY      250.0
+#define LOD_POLOMER     10.0
+#define LOD_SILA        0.2
+#define LOD_MAX_ACC     200.0 // najvacsie zrychlenie, ktore vie motor lode vyvinut
 
 // parametre zlata
-#define ZLATO_HODNOTA     1.0
+#define ZLATO_HODNOTA     10.0
 #define ZLATO_POLOMER     6.0
-#define ZLATO_KOLIZNY_LV  1
 #define ZLATO_SILA        0.0
-#define ZLATO_ZIVOTY      10.0
 
 // parametre bossa
 #define BOSS_POLOMER    20.0
-#define BOSS_KOLIZNY_LV 100
-#define BOSS_SILA       99999.9
-#define BOSS_ZIVOTY     INF
-#define BOSS_MAX_ACC    100.0
-#define BOSS_PERIODA    30.0
+#define BOSS_SILA       999.9
+#define BOSS_MAX_ACC    200.0
 
 // parametre sentinelu
 #define SENTINEL_SILA   0.05
@@ -67,14 +56,8 @@ const static double kSkoreZnic[]={1,INF,INF,0,0,50}; // ziskane body za znicenie
 #define DODAVACIA_DOBA    2.0
 #define COOLDOWN          0.3
 #define STRELA_POLOMER    5.0
-#define STRELA_KOLIZNY_LV 5
 #define STRELA_SILA       0.1
-#define STRELA_ZIVOTY     EPS
-#define STRELA_RYCHLOST   200.0
-
-// ine konstanty
-#define DELTA_TIME 0.01
-#define FRAME_TIME 0.04
+#define STRELA_RYCHLOST   500.0
 
 struct Bod {
   double x, y;
@@ -126,6 +109,8 @@ struct FyzickyObjekt {
   void pohni (double dt) ;
   void zrychli (Bod acc, double dt) ;
   void okamziteZrychli (Bod acc) ;
+  Bod lavylavy () const ;
+  Bod pravypravy () const ;
 };
 
 struct Hrac {
@@ -157,7 +142,7 @@ struct Prikaz {
 };
 
 struct Mapa {
-  double w,h;
+  double w,h; // sirka a vyska mapy
   double casAst; // ako casto sa v mape vynaraju z okraja asteroidy
   double casBoss; // kedy najskor pride boss
   double astMinR, astMaxR; // minimalny a maximalny mozny polomer vynarajuceho sa asteroidu
@@ -174,7 +159,7 @@ struct Stav {
   double casAst; // cas do prichodu dalsieho asteroidu z okraja mapy
   double casBoss; // cas do prichodu bossa
   vector<FyzickyObjekt> obj[NORM_TYPOV]; // obsahuje objekty daneho typu
-  // typy su ASTEROID, PLANETA, BOSS, STRELA
+  // typy su ASTEROID, PLANETA, BOSS, STRELA, ZLATO
   vector<Hrac> hraci; // obsahuje udaje a objekty (vesmirne lode) hracov
 
   Stav () ;

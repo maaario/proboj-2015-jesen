@@ -82,6 +82,13 @@ void FyzickyObjekt::okamziteZrychli (Bod acc) {
   rychlost= rychlost + acc;
 }
 
+Bod FyzickyObjekt::lavylavy () const {
+	return pozicia-Bod(polomer,polomer);
+}
+Bod FyzickyObjekt::pravypravy () const {
+	return pozicia+Bod(polomer,polomer);
+}
+
 Hrac::Hrac (Bod poz) : zasobnik(ZASOBNIK), zasobnikCooldown(DODAVACIA_DOBA), cooldown(0), skore(0)
 {
   obj=FyzickyObjekt(LOD,volny_hrac, poz, Bod(), LOD_POLOMER, LOD_SILA, LOD_ZIVOTY,LOD_KOLIZNY_LV);

@@ -8,7 +8,7 @@ using namespace std;
 #include "klient.h"
 #include "util.h"
 
-#define MIN_CAS_RESTART 0.5
+#define MIN_CAS_RESTART 1.5
 
 Klient::Klient() : label(""), precitane("") {}
 

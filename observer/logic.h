@@ -19,7 +19,7 @@ struct Kamera {
     this->zoom = zoom;
   }
 
-  Bod transformuj(Bod bod, double sirkaObrazovky, double vyskaObrazovky);
+  Bod transformuj(Bod bod, double sirkaObrazovky, double vyskaObrazovky, Bod offset);
 };
 
 struct Obrazky {
@@ -27,6 +27,13 @@ struct Obrazky {
 
   void nacitaj(string meno, string subor);
   void kresli(SDL_Surface *surface, string meno, int index, double x, double y, double polomer);
+};
+
+struct StavHraca {
+  int majitel;
+
+  double skore, zivoty;
+  int zasobnik;
 };
 
 struct KruhovyObjekt {
@@ -38,23 +45,21 @@ struct KruhovyObjekt {
   double polomer;
 
   int magia;
-
-  KruhovyObjekt(int typ, int majitel, Bod zaciatok, Bod koniec, double polomer) {
-    this->typ = typ;
-    this->zaciatok = zaciatok;
-    this->koniec = koniec;
-    this->polomer = polomer;
-  }
 };
 
 struct Frame {
+  vector<string> menaHracov;
+
   int sirka, vyska;
+  vector<StavHraca> stavyHracov;
   vector<KruhovyObjekt> kruhoveObjekty;
 
-  void kresli(SDL_Surface *surface, Kamera &kamera, Obrazky &obrazky);
+  void kresli(SDL_Surface *surface, Kamera &kamera, Obrazky &obrazky, TTF_Font *font);
 };
 
 struct Hra {
+  vector<string> menaHracov;
+
   int sirka, vyska;
   vector<Frame> framy;
 

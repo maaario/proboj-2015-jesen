@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <cmath>
 #include <unordered_map>
-#include <map>
+#include <unordered_set>
 using namespace std;
 
 #include "common.h"
@@ -17,6 +17,8 @@ using namespace std;
 #define RANDF_ACC 98765ll
 #define SENTINEL_POLOMER 987654.0
 #define SAFE_OD_OKRAJA 20.0
+#define SEKTOR_SIDE 50
+#define SEKTOR_MAX 99999ll
 
 static double delta_time = delta_time;
 
@@ -344,12 +346,12 @@ void pohniBossom(FyzickyObjekt& obj, Stav& stav) {
       Bod smer;
       while (r-l > EPS) {
         double s=(l+r)/2;
-        Bod kde= relpoz + relvel*s;
+        Bod kde= relpoz - relvel*s;
         double cas= sqrt(2*kde.dist()/BOSS_MAX_ACC);
         if (cas < s) {
           vyhovuje=true;
           r=s;
-          smer= relpoz;
+          smer= kde;
         }
         else {
           l=s;
@@ -379,13 +381,49 @@ void zoznamObjekty(Stav& stav, vector<FyzickyObjekt*>& objekty) {
   }
 }
 
+void sektorujObjekty(Stav& stav, unordered_map<long long,vector<FyzickyObjekt*> >& sektory) {
+	for (int t=0; t<NORM_TYPOV; t++) {
+		for (FyzickyObjekt& obj : stav.obj[t]) {
+			Bod ll= obj.lavylavy();
+			Bod rr= obj.pravypravy();
+			int lx= int(ll.x/SEKTOR_SIDE);
+			int rx= int(rr.x/SEKTOR_SIDE);
+			int ly= int(ll.y/SEKTOR_SIDE);
+			int ry= int(rr.y/SEKTOR_SIDE);
+			for (long long i=ly; i<=ry; i++) {
+				for (long long j=lx; j<=rx; j++) {
+					long long kod= i*SEKTOR_MAX + j;
+					sektory[kod].push_back(&obj);
+				}
+			}
+		}
+	}
+	for (Hrac& hrac : stav.hraci) {
+		if (!hrac.zije()) {
+			continue;
+		}
+		Bod ll= hrac.obj.lavylavy();
+		Bod rr= hrac.obj.pravypravy();
+		int lx= int(ll.x/SEKTOR_SIDE);
+		int rx= int(rr.x/SEKTOR_SIDE);
+		int ly= int(ll.y/SEKTOR_SIDE);
+		int ry= int(rr.y/SEKTOR_SIDE);
+		for (long long i=ly; i<=ry; i++) {
+			for (long long j=lx; j<=rx; j++) {
+				long long kod= i*SEKTOR_MAX + j;
+				sektory[kod].push_back(&hrac.obj);
+			}
+		}
+	}
+}
+
 void okamzityEfekt(Stav& stav,const Mapa& mapa) {
   Stav old=stav;
   
   vector<FyzickyObjekt*> objekty;
   zoznamObjekty(stav,objekty);
-  vector<FyzickyObjekt*> stare;
-  zoznamObjekty(old,stare);
+  unordered_map<long long,vector<FyzickyObjekt*> > sektory;
+  sektorujObjekty(old,sektory);
 
   // pohni bossmi
   //
@@ -396,37 +434,59 @@ void okamzityEfekt(Stav& stav,const Mapa& mapa) {
   // zrazanie objektov
   //
   for (FyzickyObjekt* prvy : objekty) {
-    vector<bool> trafil(stav.hraci.size(),false);
-    for (FyzickyObjekt* druhy : stare) {
-      if (!zrazka(*prvy,*druhy) || prvy->id == druhy->id) {
-        continue;
-      }
-      Bod acc = odpal(*prvy, *druhy);
-      Bod antiacc = odpal(*druhy, *prvy);
-      double silaZrazky = acc.dist()+antiacc.dist();
-      
-      double damage= druhy->sila*silaZrazky;
-      prvy->zivoty -= damage;
-      if (druhy->owner != -1) {
-        trafil[druhy->owner]= true;
-      }
-      prvy->okamziteZrychli(acc);
-    }
+    vector<double> ubral(stav.hraci.size(),0);
+    double povodneZivoty= prvy->zivoty;
+    Bod ll= prvy->lavylavy();
+    Bod rr= prvy->pravypravy();
+    int lx= int(ll.x/SEKTOR_SIDE);
+    int rx= int(rr.x/SEKTOR_SIDE);
+    int ly= int(ll.y/SEKTOR_SIDE);
+    int ry= int(rr.y/SEKTOR_SIDE);
+    unordered_set<int> bol; // id-cka co sme uz checkli
+    for (long long i=ly; i<=ry; i++) {
+			for (long long j=lx; j<=rx; j++) {
+				long long kod= i*SEKTOR_MAX + j;
+				for (FyzickyObjekt* druhy : sektory[kod]) {
+					if (bol.count(druhy->id)) {
+						continue;
+					}
+					bol.insert(druhy->id);
+					if (!zrazka(*prvy,*druhy) || prvy->id == druhy->id) {
+						continue;
+					}
+					Bod acc = odpal(*prvy, *druhy);
+					Bod antiacc = odpal(*druhy, *prvy);
+					double silaZrazky = acc.dist()+antiacc.dist();
+					
+					double damage= druhy->sila*silaZrazky;
+					prvy->zivoty -= damage;
+					if (druhy->owner != -1) {
+						ubral[druhy->owner]+= damage*kSkoreUber[prvy->typ];
+					}
+					prvy->okamziteZrychli(acc);
+				}
+			}
+		}
 
     udrz(*prvy,mapa);
-    
+
     // odmen ostatnych
     //
-    for (int j=0; j<(int)trafil.size(); j++) {
-      if (!trafil[j] || prvy->zije()) {
+    for (int j=0; j<(int)ubral.size(); j++) {
+      if (ubral[j]<=0) {
         continue;
       }
+      double limit= povodneZivoty*kSkoreUber[prvy->typ];
+      if (ubral[j] > limit) {
+        ubral[j]= limit;
+      }
+      if (!prvy->zije()) {
+        ubral[j]+= kSkoreZnic[prvy->typ];
+      }
       if (j == prvy->owner) {
-        stav.hraci[j].skore-= kSkoreZnic[prvy->typ];
+        ubral[j]*= -1;
       }
-      else {
-        stav.hraci[j].skore+= kSkoreZnic[prvy->typ];
-      }
+      stav.hraci[j].skore+= ubral[j];
     }
   }
 }
